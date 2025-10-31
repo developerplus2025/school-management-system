@@ -11,13 +11,17 @@ import {
 import { formatBytes, useFileUpload } from "@/hooks/use-file-upload";
 import { Button } from "@/components/ui/button";
 
+import { ScrollArea } from "@radix-ui/react-scroll-area";
+import Image from "next/image";
+import { Input } from "@/components/ui/input";
+
 export default function UploadToServer() {
   const [uploading, setUploading] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
 
   const maxSizeMB = 5;
   const maxSize = maxSizeMB * 1024 * 1024;
-  const maxFiles = 6;
+  const maxFiles = 30;
   const [serverFiles, setServerFiles] = useState<string[]>([]);
 
   const [
@@ -32,11 +36,7 @@ export default function UploadToServer() {
       clearFiles,
       getInputProps,
     },
-  ] = useFileUpload({
-    maxSize,
-    multiple: true,
-    maxFiles,
-  });
+  ] = useFileUpload({ maxSize, multiple: true, maxFiles });
 
   const fetchServerFiles = async () => {
     try {
@@ -64,6 +64,7 @@ export default function UploadToServer() {
     files.forEach((f) => {
       if (f.file instanceof File) {
         formData.append("files", f.file);
+        formData.append("titles", f.title || f.file.name); // 🔹 gửi tiêu đề kèm theo
       }
     });
 
@@ -86,6 +87,7 @@ export default function UploadToServer() {
         setStatus(` Lỗi: ${data.error || "Không thể tải lên"}`);
       }
     } catch (error) {
+      console.log(error);
       setStatus(" Kết nối đến server thất bại!");
     } finally {
       setUploading(false);
@@ -111,6 +113,7 @@ export default function UploadToServer() {
         setStatus(` ${data.error || "Không thể xóa file"}`);
       }
     } catch (error) {
+      console.log(error);
       setStatus(" Kết nối server thất bại!");
     }
   };
@@ -125,9 +128,10 @@ export default function UploadToServer() {
         onDrop={handleDrop}
         data-dragging={isDragging || undefined}
         data-files={files.length > 0 || undefined}
-        className="relative flex min-h-52 flex-col items-center overflow-hidden rounded-xl border border-dashed border-input p-4 transition-colors not-data-[files]:justify-center has-[input:focus]:border-ring has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50 data-[dragging=true]:bg-accent/50"
+        className="relative flex min-h-52 flex-col items-center overflow-hidden rounded-xl border border-dashed border-input p-4 transition-colors not-data-files:justify-center has-[input:focus]:border-ring has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50 data-[dragging=true]:bg-accent/50"
       >
         <input
+          multiple
           {...getInputProps()}
           className="sr-only"
           aria-label="Upload files"
@@ -161,7 +165,7 @@ export default function UploadToServer() {
       )}
 
       {files.length > 0 && (
-        <div className="space-y-2">
+        <div className="space-y-2  ">
           {files.map((file) => (
             <div
               key={file.id}
@@ -170,7 +174,9 @@ export default function UploadToServer() {
               <div className="flex items-center gap-3 overflow-hidden">
                 <div className="aspect-square shrink-0 rounded bg-accent">
                   <img
-                    src={file.preview}
+                    width={"40"}
+                    height={"40"}
+                    src={String(file.preview)}
                     alt={file.file.name}
                     className="size-10 rounded-[inherit] object-cover"
                   />
@@ -184,7 +190,16 @@ export default function UploadToServer() {
                   </p>
                 </div>
               </div>
-
+              <Input
+                type="text"
+                placeholder="Nhập tiêu đề file..."
+                className="border rounded px-2 py-1 text-sm w-full sm:w-48"
+                onChange={(e) => {
+                  file.title = e.target.value;
+                  // ép re-render để cập nhật giá trị nếu cần
+                  setStatus(null);
+                }}
+              />
               <Button
                 size="icon"
                 variant="ghost"
@@ -213,52 +228,57 @@ export default function UploadToServer() {
           </div>
         </div>
       )}
-      {serverFiles.map((name) => {
-        const fileUrl = `http://127.0.0.1:8000/download/${encodeURIComponent(
-          name
-        )}`;
-        const isImage = /\.(jpg|jpeg|png|gif|svg|webp)$/i.test(name);
+      <ScrollArea className="flex flex-col gap-4 h-[350px]">
+        {serverFiles.map((name) => {
+          const fileUrl = `http://127.0.0.1:8000/download/${encodeURIComponent(
+            name
+          )}`;
+          const isImage = /\.(jpg|jpeg|png|gif|svg|webp)$/i.test(name);
 
-        return (
-          <li
-            key={name}
-            className="flex items-center justify-between bg-muted/30 rounded-md px-3 py-2"
-          >
-            <div className="flex items-center gap-3 overflow-hidden">
-              {isImage ? (
-                <img
-                  src={fileUrl}
-                  alt={name}
-                  className="size-10 rounded-md object-cover border"
-                />
-              ) : (
-                <div className="flex items-center justify-center size-10 rounded-md bg-accent border">
-                  <ImageIcon className="size-5 opacity-60" />
-                </div>
-              )}
+          return (
+            <li
+              key={name}
+              className="flex gap-4 items-center justify-between bg-muted/30 rounded-md px-3 py-2"
+            >
+              <div className="flex items-center gap-3 overflow-hidden">
+                {isImage ? (
+                  <img
+                    width={"40"}
+                    height={"40"}
+                    src={fileUrl}
+                    alt={name}
+                    className="size-10 rounded-md object-cover border"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center size-10 rounded-md bg-accent border">
+                    <ImageIcon className="size-5 opacity-60" />
+                  </div>
+                )}
 
-              <span className="truncate text-sm font-medium">{name}</span>
-            </div>
+                <span className="truncate text-sm font-medium">{name}</span>
+                <span className="truncate text-sm font-medium">{}</span>
+              </div>
 
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => window.open(fileUrl, "_blank")}
-              >
-                Tải xuống
-              </Button>
-              <Button
-                size="sm"
-                variant="destructive"
-                onClick={() => handleDeleteFile(name)}
-              >
-                Xóa
-              </Button>
-            </div>
-          </li>
-        );
-      })}
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => window.open(fileUrl, "_blank")}
+                >
+                  Download
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => handleDeleteFile(name)}
+                >
+                  Delete
+                </Button>
+              </div>
+            </li>
+          );
+        })}
+      </ScrollArea>
 
       {status && (
         <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
