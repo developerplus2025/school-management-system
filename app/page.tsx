@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import {
   AlertCircleIcon,
   ImageIcon,
@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function UploadToServer() {
   const [uploading, setUploading] = useState(false);
@@ -23,7 +24,7 @@ export default function UploadToServer() {
   const maxSize = maxSizeMB * 1024 * 1024;
   const maxFiles = 30;
   const [serverFiles, setServerFiles] = useState<string[]>([]);
-
+  const [loading, setLoading] = useState(false);
   const [
     { files, isDragging, errors },
     {
@@ -44,6 +45,9 @@ export default function UploadToServer() {
       const data = await res.json();
       if (res.ok) {
         setServerFiles(data.files);
+        setTimeout(() => {
+          setLoading(!loading);
+        }, 2000);
       }
     } catch (error) {
       console.error("Lỗi khi tải danh sách file:", error);
@@ -119,7 +123,7 @@ export default function UploadToServer() {
   };
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col w-[600px] gap-2">
       {/* Khu vực kéo thả */}
       <div
         onDragEnter={handleDragEnter}
@@ -229,55 +233,112 @@ export default function UploadToServer() {
         </div>
       )}
       <ScrollArea className="flex flex-col gap-4 h-[350px]">
-        {serverFiles.map((name) => {
-          const fileUrl = `http://127.0.0.1:8000/download/${encodeURIComponent(
-            name
-          )}`;
-          const isImage = /\.(jpg|jpeg|png|gif|svg|webp)$/i.test(name);
-
-          return (
-            <li
-              key={name}
-              className="flex gap-4 items-center justify-between bg-muted/30 rounded-md px-3 py-2"
-            >
-              <div className="flex items-center gap-3 overflow-hidden">
-                {isImage ? (
-                  <img
-                    width={"40"}
-                    height={"40"}
-                    src={fileUrl}
-                    alt={name}
-                    className="size-10 rounded-md object-cover border"
-                  />
-                ) : (
-                  <div className="flex items-center justify-center size-10 rounded-md bg-accent border">
-                    <ImageIcon className="size-5 opacity-60" />
-                  </div>
-                )}
-
-                <span className="truncate text-sm font-medium">{name}</span>
-                <span className="truncate text-sm font-medium">{}</span>
+        {!loading && (
+          <div className="flex flex-col gap-8">
+            <div className="flex items-center justify-between space-x-4">
+              <div className="gap-3 flex items-center">
+                <Skeleton className="h-12 w-12 rounded-full" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-[250px]" />
+                  <Skeleton className="h-4 w-[200px]" />
+                </div>
               </div>
-
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => window.open(fileUrl, "_blank")}
-                >
-                  Download
-                </Button>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => handleDeleteFile(name)}
-                >
-                  Delete
-                </Button>
+              <div className="gap-4 flex items-center">
+                <Skeleton className="h-5 w-[70px]" />{" "}
+                <Skeleton className="h-5 w-[70px]" />
               </div>
-            </li>
-          );
-        })}
+            </div>
+            <div className="flex items-center justify-between space-x-4">
+              <div className="gap-3 flex items-center">
+                <Skeleton className="h-12 w-12 rounded-full" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-[250px]" />
+                  <Skeleton className="h-4 w-[200px]" />
+                </div>
+              </div>
+              <div className="gap-4 flex items-center">
+                <Skeleton className="h-5 w-[70px]" />{" "}
+                <Skeleton className="h-5 w-[70px]" />
+              </div>
+            </div>
+            <div className="flex items-center justify-between space-x-4">
+              <div className="gap-3 flex items-center">
+                <Skeleton className="h-12 w-12 rounded-full" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-[250px]" />
+                  <Skeleton className="h-4 w-[200px]" />
+                </div>
+              </div>
+              <div className="gap-4 flex items-center">
+                <Skeleton className="h-5 w-[70px]" />{" "}
+                <Skeleton className="h-5 w-[70px]" />
+              </div>
+            </div>
+            <div className="flex items-center justify-between space-x-4">
+              <div className="gap-3 flex items-center">
+                <Skeleton className="h-12 w-12 rounded-full" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-[250px]" />
+                  <Skeleton className="h-4 w-[200px]" />
+                </div>
+              </div>
+              <div className="gap-4 flex items-center">
+                <Skeleton className="h-5 w-[70px]" />{" "}
+                <Skeleton className="h-5 w-[70px]" />
+              </div>
+            </div>
+          </div>
+        )}
+        {loading &&
+          serverFiles.map((name) => {
+            const fileUrl = `http://127.0.0.1:8000/download/${encodeURIComponent(
+              name
+            )}`;
+            const isImage = /\.(jpg|jpeg|png|gif|svg|webp)$/i.test(name);
+
+            return (
+              <li
+                key={name}
+                className="flex gap-4 items-center justify-between bg-muted/30 rounded-md px-3 py-2"
+              >
+                <div className="flex items-center gap-3 overflow-hidden">
+                  {isImage ? (
+                    <img
+                      width={"40"}
+                      height={"40"}
+                      src={fileUrl}
+                      alt={name}
+                      className="size-10 rounded-md object-cover border"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center size-10 rounded-md bg-accent border">
+                      <ImageIcon className="size-5 opacity-60" />
+                    </div>
+                  )}
+
+                  <span className="truncate text-sm font-medium">{name}</span>
+                  <span className="truncate text-sm font-medium">{}</span>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => window.open(fileUrl, "_blank")}
+                  >
+                    Download
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => handleDeleteFile(name)}
+                  >
+                    Delete
+                  </Button>
+                </div>
+              </li>
+            );
+          })}
       </ScrollArea>
 
       {status && (
