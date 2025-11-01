@@ -11,12 +11,13 @@ import {
 } from "react"
 
 export type FileMetadata = {
-  name: string
-  size: number
-  type: string
-  url: string
-  id: string
-}
+  name: string;
+  size: number;
+  type: string;
+  url: string;
+  id: string;
+  title: string;
+};
 
 export type FileWithPreview = {
   file: File | FileMetadata;
@@ -78,6 +79,7 @@ export const useFileUpload = (
       file,
       id: file.id,
       preview: file.url,
+      title: file.title,
     })),
     isDragging: false,
     errors: [],

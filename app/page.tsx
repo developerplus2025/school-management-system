@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function UploadToServer() {
-  const [uploading, setUploading] = useState(false);
+	const [uploading, setUploading] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
 
   const maxSizeMB = 5;
@@ -123,7 +123,7 @@ export default function UploadToServer() {
   };
 
   return (
-    <div className="flex flex-col w-[600px] gap-2">
+    <div className="flex mt-[90px] flex-col w-[600px] gap-6">
       {/* Khu vực kéo thả */}
       <div
         onDragEnter={handleDragEnter}
@@ -232,9 +232,9 @@ export default function UploadToServer() {
           </div>
         </div>
       )}
-      <ScrollArea className="flex flex-col gap-4 h-[350px]">
+      <ScrollArea className="flex flex-col gap-4 h-[50px]">
         {!loading && (
-          <div className="flex flex-col gap-8">
+          <div className="flex  flex-col gap-8">
             <div className="flex items-center justify-between space-x-4">
               <div className="gap-3 flex items-center">
                 <Skeleton className="h-12 w-12 rounded-full" />
