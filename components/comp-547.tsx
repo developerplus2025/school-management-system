@@ -55,8 +55,7 @@ export default function Component() {
     maxSize,
     multiple: true,
     maxFiles,
-    initialFiles,
-  })
+  });
 
   return (
     <div className="flex flex-col gap-2">
