@@ -152,6 +152,7 @@ export default function UserButtonClient() {
     await authClient.signOut();
     authClient.refreshToken;
     refetch();
+    window.location.reload();
     router.push("/");
   };
   const variants = {
@@ -179,19 +180,19 @@ export default function UserButtonClient() {
           const contentStyle = elements.floating.style;
           contentStyle.setProperty(
             "--radix-popper-available-width",
-            `${availableWidth}px`,
+            `${availableWidth}px`
           );
           contentStyle.setProperty(
             "--radix-popper-available-height",
-            `${availableHeight}px`,
+            `${availableHeight}px`
           );
           contentStyle.setProperty(
             "--radix-popper-anchor-width",
-            `${anchorWidth}px`,
+            `${anchorWidth}px`
           );
           contentStyle.setProperty(
             "--radix-popper-anchor-height",
-            `${anchorHeight}px`,
+            `${anchorHeight}px`
           );
         },
       }),
@@ -208,19 +209,26 @@ export default function UserButtonClient() {
     },
   });
   const { getReferenceProps, getFloatingProps } = useInteractions([dismiss]);
-
+  const signInWithGithub = async () => {
+    const data = await authClient.signIn.social({
+      provider: "github",
+      callbackURL: "/",
+    });
+  };
   if (isPending) {
-    return <div  />;
+    return <div />;
   }
-  return (
-    <div className={`flex items-center gap-4`}>
-      <motion.div
-        initial={{ opacity: 0 }} // Trạng thái ban đầu: mờ và di chuyển xuống
-        animate={!isPending ? { opacity: 1 } : { opacity: 0 }} // Trạng thái sau khi hoàn thành: rõ và về vị trí ban đầu
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className={`${!isPending ? "" : "pointer-events-none"} flex items-center gap-2`}
-      >
-        {/* <div
+return (
+  <div className={`flex items-center gap-4`}>
+    <motion.div
+      initial={{ opacity: 0 }} // Trạng thái ban đầu: mờ và di chuyển xuống
+      animate={!isPending ? { opacity: 1 } : { opacity: 0 }} // Trạng thái sau khi hoàn thành: rõ và về vị trí ban đầu
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      className={`${
+        !isPending ? "" : "pointer-events-none"
+      } flex items-center gap-2`}
+    >
+      {/* <div
           style={{
             backgroundColor:
               "color-mix(in oklab,var(--color-fd-secondary)50%,transparent)",
@@ -254,40 +262,38 @@ export default function UserButtonClient() {
             </kbd>
           </div>
         </div> */}
-        {/* <SearchUi /> */}
-        <div className="hover:bg-muted flex h-[30px] w-[37px] cursor-pointer items-center justify-center rounded-md border transition-all duration-200 ease-out dark:hover:bg-[#101010]">
-          <Link
-            href={"https://github.com/developerplus2025/decent-over-nextjs-15/"}
+      {/* <SearchUi /> */}
+      {/* <div className="hover:bg-muted flex h-[30px] w-[37px] cursor-pointer items-center justify-center rounded-md border transition-all duration-200 ease-out dark:hover:bg-[#101010]">
+        <Link
+          href={"https://github.com/developerplus2025/decent-over-nextjs-15/"}
+        >
+          {" "}
+          <GitHub />
+        </Link>
+      </div>
+      <div className="hover:bg-muted flex h-[30px] w-[37px] cursor-pointer items-center justify-center rounded-md border transition-all duration-200 ease-out dark:hover:bg-[#101010]">
+        <Link href={"https://x.com/DeveloperPlus24"}><X /></Link>
+      </div> */}
+
+      {/* <ThemeToggleButton /> */}
+
+      {/* <FeedBack /> */}
+      {session?.user && (
+        <div>
+          <div
+            ref={refs.setReference}
+            {...getReferenceProps()}
+            onClick={() => setIsOpen(!isOpen)}
+            className="cursor-pointer"
           >
-            {" "}
-            {/* <GitHub /> */}
-          </Link>
-        </div>
-        <div className="hover:bg-muted flex h-[30px] w-[37px] cursor-pointer items-center justify-center rounded-md border transition-all duration-200 ease-out dark:hover:bg-[#101010]">
-          <Link href={"https://x.com/DeveloperPlus24"}>
-            {/* <X /> */}
-          </Link>
-        </div>
-
-        {/* <ThemeToggleButton /> */}
-
-        {/* <FeedBack /> */}
-        {session?.user && (
-          <div>
-            <div
-              ref={refs.setReference}
-              {...getReferenceProps()}
-              onClick={() => setIsOpen(!isOpen)}
-              className="cursor-pointer"
-            >
-              <Image
-                className="h-[40px] w-[40px] dark:invert-[1]"
-                alt="person"
-                src="/person-circle-outline.svg"
-                width="20"
-                height="20"
-              ></Image>
-              {/* {session && session.user && session.user.image ? (
+            <img
+              className=" rounded-full size-8 "
+              alt="person"
+              src={String(session.user.image)}
+              width="20"
+              height="20"
+            ></img>
+            {/* {session && session.user && session.user.image ? (
                 <img
                   height={40}
                   width={40}
@@ -298,75 +304,31 @@ export default function UserButtonClient() {
               ) : (
                 <div className="h-[2.1rem] w-[2.1rem] cursor-pointer rounded-full bg-linear-to-r from-cyan-500 to-blue-500" />
               )} */}
-            </div>
+          </div>
 
-            {isMounted && (
+          {isMounted && (
+            <div
+              {...getFloatingProps()}
+              ref={refs.setFloating}
+              style={floatingStyles}
+            >
               <div
-                {...getFloatingProps()}
-                ref={refs.setFloating}
-                style={floatingStyles}
+                data-state={isOpen ? "open" : "closed"}
+                data-side="right"
+                className="data-[state=open]:animate-in data data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 flex h-fit w-[16rem] flex-col justify-between rounded-xl border border-[#2c2c2c] bg-black"
               >
-                <div
-                  data-state={isOpen ? "open" : "closed"}
-                  data-side="right"
-                  className="data-[state=open]:animate-in data data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 flex h-fit w-[16rem] flex-col justify-between rounded-xl border border-[#2c2c2c] bg-black"
-                >
-                  <div className="flex w-full flex-col gap-2">
-                    <div className="flex flex-col gap-1 px-4 py-2">
-                      <h1 className="text-sm">{cleanName}</h1>
-                      <span className="text-sm text-[#a1a1a1]">
-                        {session?.user?.email ?? ""}
-                      </span>
-                    </div>
-                    <div className="border-b border-b-[#302f2f]"></div>
-                    <div className="flex w-full flex-col gap-2 px-4 py-2 [&_svg]:size-4">
-                      {itemsPartOne.map((itemsPartOne) => (
-                        <Button
-                          key={itemsPartOne.name}
-                          onMouseEnter={() => {
-                            setIsHovered(true); // Khi bắt đầu hover
-                            console.log("Hovered");
-                          }}
-                          onMouseLeave={() => {
-                            setIsHovered(false); // Khi kết thúc hover
-                            console.log("Unhovered");
-                          }}
-                          className={`w-full border-none ${isHovered ? "bg-primary/90" : "bg-black"} justify-between`}
-                          variant="outline"
-                          onClick={() =>
-                            router.push(`/${itemsPartOne.directLink}`)
-                          }
-                        >
-                          {itemsPartOne.name}
-                          {itemsPartOne.icon}
-                        </Button>
-                      ))}
-                    </div>
-                    <div className="border-b border-b-[#302f2f]"></div>
-                    <div className="flex flex-col gap-2 px-4 py-2">
-                      {itemsPartTwo.map((itemsPartTwo) => (
-                        <Button
-                          key={itemsPartTwo.name}
-                          onMouseEnter={() => {
-                            setIsHovered(true); // Khi bắt đầu hover
-                            console.log("Hovered");
-                          }}
-                          onMouseLeave={() => {
-                            setIsHovered(false); // Khi kết thúc hover
-                            console.log("Unhovered");
-                          }}
-                          className={`w-full border-none ${isHovered ? "bg-primary/90" : "bg-black"} justify-between`}
-                          variant="outline"
-                          onClick={() =>
-                            router.push(`/${itemsPartTwo.directLink}`)
-                          }
-                        >
-                          {itemsPartTwo.name}
-                          {itemsPartTwo.icon}
-                        </Button>
-                      ))}
-
+                <div className="flex w-full flex-col gap-2">
+                  <div className="flex flex-col gap-1 px-4 py-2">
+                    <h1 className="text-sm">{cleanName}</h1>
+                    <span className="text-sm text-[#a1a1a1]">
+                      {session?.user?.email ?? ""}
+                    </span>
+                  </div>
+                  <div className="border-b border-b-[#302f2f]"></div>
+                  <div className="flex w-full flex-col gap-2 px-4 py-2 [&_svg]:size-4">
+                    {itemsPartOne.map((itemsPartOne) => (
                       <Button
+                        key={itemsPartOne.name}
                         onMouseEnter={() => {
                           setIsHovered(true); // Khi bắt đầu hover
                           console.log("Hovered");
@@ -375,88 +337,138 @@ export default function UserButtonClient() {
                           setIsHovered(false); // Khi kết thúc hover
                           console.log("Unhovered");
                         }}
-                        className={`w-full border-none ${isHovered ? "bg-primary/90" : "bg-black"} justify-between`}
+                        className={`w-full border-none ${
+                          isHovered ? "bg-primary/90" : "bg-black"
+                        } justify-between`}
                         variant="outline"
-                        onClick={handleLogout}
+                        onClick={() =>
+                          router.push(`/${itemsPartOne.directLink}`)
+                        }
                       >
-                        Logout
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="23"
-                          height="23"
-                          fill="#ffffff"
-                          viewBox="0 0 256 256"
-                        >
-                          <path d="M120,216a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V40a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H56V208h56A8,8,0,0,1,120,216Zm109.66-93.66-40-40A8,8,0,0,0,176,88v32H112a8,8,0,0,0,0,16h64v32a8,8,0,0,0,13.66,5.66l40-40A8,8,0,0,0,229.66,122.34Z"></path>
-                        </svg>
+                        {itemsPartOne.name}
+                        {itemsPartOne.icon}
                       </Button>
-                    </div>
-                    <div className="border-b border-b-[#302f2f]"></div>
-                    <div className="flex flex-col px-4 py-2">
-                      <Button>Upgrade to Pro</Button>
-                    </div>
+                    ))}
+                  </div>
+                  <div className="border-b border-b-[#302f2f]"></div>
+                  <div className="flex flex-col gap-2 px-4 py-2">
+                    {itemsPartTwo.map((itemsPartTwo) => (
+                      <Button
+                        key={itemsPartTwo.name}
+                        onMouseEnter={() => {
+                          setIsHovered(true); // Khi bắt đầu hover
+                          console.log("Hovered");
+                        }}
+                        onMouseLeave={() => {
+                          setIsHovered(false); // Khi kết thúc hover
+                          console.log("Unhovered");
+                        }}
+                        className={`w-full border-none ${
+                          isHovered ? "bg-primary/90" : "bg-black"
+                        } justify-between`}
+                        variant="outline"
+                        onClick={() =>
+                          router.push(`/${itemsPartTwo.directLink}`)
+                        }
+                      >
+                        {itemsPartTwo.name}
+                        {itemsPartTwo.icon}
+                      </Button>
+                    ))}
+
+                    <Button
+                      onMouseEnter={() => {
+                        setIsHovered(true); // Khi bắt đầu hover
+                        console.log("Hovered");
+                      }}
+                      onMouseLeave={() => {
+                        setIsHovered(false); // Khi kết thúc hover
+                        console.log("Unhovered");
+                      }}
+                      className={`w-full border-none ${
+                        isHovered ? "bg-primary/90" : "bg-black"
+                      } justify-between`}
+                      variant="outline"
+                      onClick={handleLogout}
+                    >
+                      Logout
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="23"
+                        height="23"
+                        fill="#ffffff"
+                        viewBox="0 0 256 256"
+                      >
+                        <path d="M120,216a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V40a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H56V208h56A8,8,0,0,1,120,216Zm109.66-93.66-40-40A8,8,0,0,0,176,88v32H112a8,8,0,0,0,0,16h64v32a8,8,0,0,0,13.66,5.66l40-40A8,8,0,0,0,229.66,122.34Z"></path>
+                      </svg>
+                    </Button>
+                  </div>
+                  <div className="border-b border-b-[#302f2f]"></div>
+                  <div className="flex flex-col px-4 py-2">
+                    <Button>Upgrade to Pro</Button>
                   </div>
                 </div>
               </div>
-            )}
-          </div>
-        )}
-        {!session?.user && (
-          <div>
-            <motion.div
-              variants={variants}
-              // initial={session?.user ? "hidden" : "visible"}
-              // animate={session?.user ? "hidden" : "visible"}
-              transition={{ duration: 0.5, ease: "easeOut", delay: 4 }}
-              className="flex items-center gap-4"
+            </div>
+          )}
+        </div>
+      )}
+      {!session?.user && (
+        <div>
+          <motion.div
+            variants={variants}
+            // initial={session?.user ? "hidden" : "visible"}
+            // animate={session?.user ? "hidden" : "visible"}
+            transition={{ duration: 0.5, ease: "easeOut", delay: 4 }}
+            className="flex items-center gap-4"
+          >
+            <div
+              onClick={() => signInWithGithub()}
+              className="flex items-center justify-center gap-3"
             >
-              <Link
-                href="/signin"
-                className="flex items-center justify-center gap-3"
+              <motion.div
+                className="relative"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
               >
-                <motion.div
-                  className="relative"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.5, ease: "easeOut" }}
+                <Button
+                  variant="outline"
+                  className="hover:bg-accent flex h-8 items-center dark:hover:bg-[#1a1a1a]"
                 >
-                  <Button
-                    variant="outline"
-                    className="hover:bg-accent flex h-[32px] items-center dark:hover:bg-[#1a1a1a]"
-                  >
-                    Sign In
-                  </Button>
-                </motion.div>
-              </Link>
+                  Sign In
+                </Button>
+              </motion.div>
+            </div>
 
-              <Link href="/signup">
-                <motion.div
-                  className="relative"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.5, ease: "easeOut" }}
+            <div onClick={() => signInWithGithub()}>
+              <motion.div
+                className="relative"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+              >
+                <Button
+                  variant="outline"
+                  className="h-8 gap-1 [&_svg]:size-[15px]"
                 >
-                  <Button
-                    variant="outline"
-                    className="h-[32px] gap-1 [&_svg]:size-[15px]"
+                  Create Account
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="#ffffff"
+                    viewBox="0 0 256 256"
                   >
-                    Create Account
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      fill="#ffffff"
-                      viewBox="0 0 256 256"
-                    >
-                      <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm29.66-93.66a8,8,0,0,1,0,11.32l-40,40a8,8,0,0,1-11.32-11.32L140.69,128,106.34,93.66a8,8,0,0,1,11.32-11.32Z"></path>
-                    </svg>
-                  </Button>
-                </motion.div>
-              </Link>
-            </motion.div>
-          </div>
-        )}
-      </motion.div>
-    </div>
-  );
+                    <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm29.66-93.66a8,8,0,0,1,0,11.32l-40,40a8,8,0,0,1-11.32-11.32L140.69,128,106.34,93.66a8,8,0,0,1,11.32-11.32Z"></path>
+                  </svg>
+                </Button>
+              </motion.div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </motion.div>
+  </div>
+);
 }
