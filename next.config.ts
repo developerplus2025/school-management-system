@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    viewTransition: true,
+    turbopackFileSystemCacheForDev: true,
+  },
   images: {
     remotePatterns: [
       new URL("http://127.0.0.1:8000/**"),
