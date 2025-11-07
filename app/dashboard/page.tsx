@@ -3,12 +3,18 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { UploadIcon, XIcon, CheckCircleIcon } from "lucide-react";
+import {
+  UploadIcon,
+  XIcon,
+  CheckCircleIcon,
+  Terminal,
+  TriangleAlert,
+} from "lucide-react";
 import Image from "next/image";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { useFileUpload, formatBytes } from "@/hooks/use-file-upload";
 import { useSession } from "../lib/auth-client";
-
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function UploadToServer() {
   const { data: session } = useSession();
@@ -45,7 +51,7 @@ export default function UploadToServer() {
 
   const handleUploadToServer = async () => {
     if (!token || !userId) {
-      setStatus("⚠️ Vui lòng đăng nhập trước khi tải file lên.");
+      setStatus(" Please login before uploading files.");
       return;
     }
 
@@ -124,7 +130,15 @@ export default function UploadToServer() {
     <div className="flex mt-[90px] flex-col w-[600px] gap-6">
       {!token ? (
         <div className="text-center text-sm text-muted-foreground border rounded-lg py-10">
-          <p>⚠️ You need to log in to upload and manage your files.</p>
+          <Alert variant="destructive">
+            <TriangleAlert />
+            <AlertTitle>
+              You need to log in to upload and manage your files.
+            </AlertTitle>
+            <AlertDescription>
+              You can read docs before use service
+            </AlertDescription>
+          </Alert>
         </div>
       ) : (
         <>
