@@ -26,20 +26,26 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} h-screen flex flex-col gap-8 items-center  antialiased`}
+    <>
+      <html
+        lang="en"
+        className={`styled-scrollbar ${geistSans.variable} ${geistMono.variable} `}
+        suppressHydrationWarning
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
+        <body
+          className={`${geistSans.variable} ${geistMono.variable} h-screen flex flex-col gap-8 items-center  antialiased`}
         >
-          <Navigation />
-          {children}
-        </ThemeProvider>
-      </body>
-    </html>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <Navigation />
+            {children}
+          </ThemeProvider>
+        </body>
+      </html>
+    </>
   );
 }
