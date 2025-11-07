@@ -129,7 +129,7 @@ export default function UploadToServer() {
   return (
     <div className="flex mt-[90px] flex-col w-[600px] gap-6">
       {!token ? (
-        <div className="text-center text-sm text-muted-foreground border rounded-lg py-10">
+        <div className="mt-[5rem]">
           <Alert variant="destructive">
             <TriangleAlert />
             <AlertTitle>
