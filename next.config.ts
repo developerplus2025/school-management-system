@@ -11,11 +11,11 @@ const nextConfig: NextConfig = {
       new URL("https://avatars.githubusercontent.com/**"),
     ],
 
-    localPatterns: [
-      {
-        pathname: "https://avatars.githubusercontent.com/**",
-      },
-    ],
+    // localPatterns: [
+    //   {
+    //     pathname: "https://avatars.githubusercontent.com/**",
+    //   },
+    // ],
   },
 };
 

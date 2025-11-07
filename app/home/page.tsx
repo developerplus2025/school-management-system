@@ -1,113 +1,68 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { ArrowRight, Mail, SendHorizonal } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import React from "react";
 
-export default function HomeSearchPage() {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<
-    { filename: string; user_id: string; download_url: string }[]
-  >([]);
-  const [loading, setLoading] = useState(false);
-
-  // 🔹 Hàm gọi API tìm kiếm
-  const handleSearch = async (searchText: string) => {
-    setLoading(true);
-    try {
-      const url =
-        searchText.trim() === ""
-          ? "http://127.0.0.1:8000/search?query=*"
-          : `http://127.0.0.1:8000/search?query=${encodeURIComponent(
-              searchText
-            )}`;
-
-      const res = await fetch(url);
-      const data = await res.json();
-      setResults(data.results || []);
-    } catch (err) {
-      console.error("Lỗi khi tìm kiếm:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 🔹 Gọi API khi trang load lần đầu (lấy toàn bộ file)
-  useEffect(() => {
-    handleSearch("");
-  }, []);
-
-  // 🔹 Tự động tìm khi người dùng nhập (debounce 500ms)
-  useEffect(() => {
-    const delayDebounce = setTimeout(() => {
-      handleSearch(query);
-    }, 500);
-
-    return () => clearTimeout(delayDebounce);
-  }, [query]);
-
+export default function HomePage() {
   return (
-    <div className="w-full px-12 mx-auto mt-24 flex flex-col items-center gap-6">
-      {/* Thanh tìm kiếm */}
-      <div className="flex w-full justify-center gap-8">
-        <Input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Enter file name to search..."
-          className="w-[500px]"
-        />
-       
-      </div>
-
-    
-      <ul>
-        {!loading && results.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center">
-            No results found.
-          </p>
-        )}
-
-        <div className="grid grid-cols-4 w-full justify-items-center gap-8">
-          {results.map((file, idx) => {
-            const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(file.filename);
-            return (
-              <li
-                key={idx}
-                className="flex flex-col gap-4 items-center justify-between rounded-md p-3"
+    <main className="w-full ">
+      <section className="overflow-hidden h-screen">
+        <div className="relative mx-auto w-full px-20 py-28 lg:py-20">
+          <div className="lg:flex lg:items-center lg:gap-12">
+            <div className="relative top-[7rem] z-10 mx-auto max-w-xl text-center lg:ml-0 lg:w-1/2 lg:text-left">
+              <Link
+                href="/"
+                className="rounded-(--radius) mx-auto flex w-fit items-center gap-2 border p-1 pr-3 lg:ml-0"
               >
-                <div className="flex flex-col items-center gap-3">
-                  {isImage && (
-                    <img
-                      src={file.download_url}
-                      alt={file.filename}
-                      className="w-[200px] h-[200px] rounded-md object-cover"
-                    />
-                  )}
-                  <div>
-                    <p className="font-medium text-sm truncate max-w-[200px]">
-                      {file.filename}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      User: {file.user_id}
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => window.open(file.download_url, "_blank")}
-                >
-                  Download
-                </Button>
-              </li>
-            );
-          })}
-        </div>
-      </ul>
+                <span className="bg-muted rounded-[calc(var(--radius)-0.25rem)] px-2 py-1 text-xs">
+                  New
+                </span>
+                <span className="text-sm">Introduction Upload </span>
+                <span className="bg-(--color-border) block h-4 w-px"></span>
 
-      {loading && (
-        <p className="text-sm text-muted-foreground text-center">Loading...</p>
-      )}
-    </div>
+                <ArrowRight className="size-4" />
+              </Link>
+
+              <div className="flex flex-col gap-8">
+                <h1 className="mt-10 text-balance text-3xl font-medium md:text-5xl xl:text-5xl">
+                  A Complete Learning Resource for Students
+                </h1>
+                <p>
+                  Discover a rich collection of learning resources, study
+                  materials, and inspirational content designed to guide you
+                  through every step of your educational journey — helping you
+                  achieve your academic goals, develop critical thinking, and
+                  grow into a lifelong learner.
+                </p>
+                <div className="flex gap-4 items-center">
+                  <Button variant={"outline"}> Getting Started</Button>
+                  <Button variant={"outline"}> Explore Now</Button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="absolute inset-0 -mx-4 rounded-3xl p-3 lg:col-span-3">
+            <div className="relative">
+              <div className="bg-radial-[at_65%_25%] to-background z-1 -inset-17 absolute from-transparent to-40%"></div>
+              <Image
+                className="hidden dark:block"
+                src="/418_1x_shots_so.png"
+                alt="app illustration"
+                width={2796}
+                height={2008}
+              />
+              <Image
+                className="dark:hidden"
+                src="/preview.png"
+                alt="app illustration"
+                width={2796}
+                height={2008}
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
   );
 }
