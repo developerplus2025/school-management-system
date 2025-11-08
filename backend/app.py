@@ -1,12 +1,12 @@
 from fastapi import FastAPI, UploadFile, File, Form, Query
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-import os, shutil
+import os, shutil, urllib.parse
 from typing import List
 
 app = FastAPI()
 
-
+# Cho phép CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  
@@ -15,41 +15,44 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
+# Thư mục gốc lưu file
 BASE_DIR = "uploads"
 os.makedirs(BASE_DIR, exist_ok=True)
 
 
+# 🔍 API tìm kiếm toàn bộ file của tất cả người dùng
 @app.get("/search")
 async def search_files(query: str = Query("*")):
     results = []
 
-    for user_folder in os.listdir(BASE_DIR):
-        user_path = os.path.join(BASE_DIR, user_folder)
+    for encoded_email in os.listdir(BASE_DIR):
+        user_path = os.path.join(BASE_DIR, encoded_email)
         if not os.path.isdir(user_path):
             continue
+
+        user_email = urllib.parse.unquote(encoded_email)
 
         for file in os.listdir(user_path):
             if query == "*" or query.lower() in file.lower():
                 results.append({
-                    "user_id": user_folder,
+                    "user_id": user_email,
                     "filename": file,
                     "title": file.split("_")[0] if "_" in file else file,
-                    "download_url": f"http://127.0.0.1:8000/download/{file}?user_id={user_folder}"
+                    "download_url": f"http://127.0.0.1:8000/download/{urllib.parse.quote(file)}?user_email={urllib.parse.quote(user_email)}"
                 })
 
     return {"results": results}
 
 
-
 # 📤 API tải file lên
 @app.post("/upload")
 async def upload_files(
-    user_id: str = Form(...),
+    user_email: str = Form(...),
     files: List[UploadFile] = File(...),
     titles: List[str] = Form(...),
 ):
-    user_folder = os.path.join(BASE_DIR, user_id)
+    encoded_email = urllib.parse.quote(user_email, safe="")
+    user_folder = os.path.join(BASE_DIR, encoded_email)
     os.makedirs(user_folder, exist_ok=True)
 
     saved_files = []
@@ -66,10 +69,11 @@ async def upload_files(
     return {"message": f"Tải lên {len(files)} file thành công!", "files": saved_files}
 
 
-
+# 📄 Danh sách file của 1 người dùng
 @app.get("/files")
-async def list_files(user_id: str):
-    user_folder = os.path.join(BASE_DIR, user_id)
+async def list_files(user_email: str):
+    encoded_email = urllib.parse.quote(user_email, safe="")
+    user_folder = os.path.join(BASE_DIR, encoded_email)
     if not os.path.exists(user_folder):
         return {"files": []}
 
@@ -80,20 +84,24 @@ async def list_files(user_id: str):
     return {"files": files}
 
 
-
+# ⬇️ Tải file
 @app.get("/download/{filename}")
-async def download_file(filename: str, user_id: str):
-    file_path = os.path.join(BASE_DIR, user_id, filename)
+async def download_file(filename: str, user_email: str):
+    encoded_email = urllib.parse.quote(user_email, safe="")
+    file_path = os.path.join(BASE_DIR, encoded_email, filename)
+
     if not os.path.exists(file_path):
         return {"error": "File không tồn tại!"}
 
     return FileResponse(file_path, filename=filename)
 
 
-
+# ❌ Xóa file
 @app.delete("/delete/{filename}")
-async def delete_file(filename: str, user_id: str):
-    file_path = os.path.join(BASE_DIR, user_id, filename)
+async def delete_file(filename: str, user_email: str):
+    encoded_email = urllib.parse.quote(user_email, safe="")
+    file_path = os.path.join(BASE_DIR, encoded_email, filename)
+
     if not os.path.exists(file_path):
         return {"error": "File không tồn tại!"}
 
