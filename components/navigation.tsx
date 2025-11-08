@@ -66,7 +66,7 @@ export default function Navigation() {
           {data.map((link) => (
             <Link
               key={link.id}
-              className={`link text-sm hover:text-white ${
+              className={`link text-sm transition-colors ease-out duration-300 hover:text-white ${
                 pathname === `${link.src}` ? "text-[white]" : "text-[#a1a1a1]"
               }`}
               href={link.src}
