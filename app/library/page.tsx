@@ -110,12 +110,12 @@ const data: Record<string, { icon: JSX.Element }> = {
       >
         <path
           stroke="#D5D7DA"
-          stroke-width="1.5"
+          strokeWidth="1.5"
           d="M4.75 4A3.25 3.25 0 0 1 8 .75h16c.121 0 .238.048.323.134l10.793 10.793a.46.46 0 0 1 .134.323v24A3.25 3.25 0 0 1 32 39.25H8A3.25 3.25 0 0 1 4.75 36z"
         />
         <path
           stroke="#D5D7DA"
-          stroke-width="1.5"
+          strokeWidth="1.5"
           d="M24 .5V8a4 4 0 0 0 4 4h7.5"
         />
       </svg>
@@ -126,7 +126,7 @@ const data: Record<string, { icon: JSX.Element }> = {
 export default function HomeSearchPage() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<
-    { filename: string; user_id: string; download_url: string }[]
+    { filename: string; user_email: string; download_url: string }[]
   >([]);
   const [loading, setLoading] = useState(false);
 
@@ -223,7 +223,7 @@ export default function HomeSearchPage() {
                       <div className="">
                         <p className="font-medium text-sm ">{file.filename}</p>
                         <p className="text-xs text-muted-foreground">
-                          User: {file.user_id}
+                          User: {file.user_email}
                         </p>
                       </div>
                     </div>

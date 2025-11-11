@@ -6,14 +6,12 @@ import { Input } from "@/components/ui/input";
 import {
   UploadIcon,
   XIcon,
-  CheckCircleIcon,
-  Terminal,
   TriangleAlert,
   Trash,
   Download,
+  Edit,
 } from "lucide-react";
 import Image from "next/image";
-
 import { useFileUpload, formatBytes } from "@/hooks/use-file-upload";
 import { useSession } from "../lib/auth-client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -24,7 +22,7 @@ export default function UploadToServer() {
   const { data: session } = useSession();
   const token = session?.session?.token;
   const userEmail = session?.user?.email;
-
+  const [edit, setEdit] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [serverFiles, setServerFiles] = useState<
@@ -36,6 +34,7 @@ export default function UploadToServer() {
     { handleDrop, openFileDialog, removeFile, clearFiles, getInputProps },
   ] = useFileUpload({ multiple: true, maxSize: 5 * 1024 * 1024, maxFiles: 30 });
 
+  // Lấy danh sách file từ server
   const fetchServerFiles = async () => {
     if (!userEmail || !token) return;
     try {
@@ -43,12 +42,9 @@ export default function UploadToServer() {
         `http://127.0.0.1:8000/files?user_email=${encodeURIComponent(
           userEmail
         )}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await res.json();
-      console.log(data);
       if (res.ok) setServerFiles(data.files || []);
     } catch (err) {
       console.error("Lỗi khi tải danh sách file:", err);
@@ -59,9 +55,10 @@ export default function UploadToServer() {
     fetchServerFiles();
   }, [userEmail]);
 
+  // Upload file với tên đồng bộ từ input
   const handleUploadToServer = async () => {
     if (!token || !userEmail) {
-      setStatus(" Please login before uploading files.");
+      setStatus("Please login before uploading files.");
       return;
     }
 
@@ -72,10 +69,13 @@ export default function UploadToServer() {
 
     const formData = new FormData();
     formData.append("user_email", userEmail);
+
     files.forEach((f) => {
       if (f.file instanceof File) {
         formData.append("files", f.file);
-        formData.append("titles", f.title || f.file.name);
+        // Dùng tên nhập từ input làm tên file gửi lên server
+        const customName = f.title?.trim() || f.file.name;
+        formData.append("titles", customName);
       }
     });
 
@@ -85,7 +85,9 @@ export default function UploadToServer() {
 
       const res = await fetch("http://127.0.0.1:8000/upload", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         body: formData,
       });
 
@@ -96,6 +98,7 @@ export default function UploadToServer() {
         clearFiles();
         fetchServerFiles();
       } else {
+        console.error(data);
         setStatus(data.error || "Lỗi khi tải file.");
       }
     } catch (err) {
@@ -105,7 +108,8 @@ export default function UploadToServer() {
       setUploading(false);
     }
   };
-  useEffect(() => {}, [status]);
+
+  // Xóa file
   const handleDeleteFile = async (filename: string) => {
     if (!token || !userEmail) {
       setStatus("⚠️ Vui lòng đăng nhập để xóa file.");
@@ -127,7 +131,6 @@ export default function UploadToServer() {
       const data = await res.json();
       if (res.ok) {
         toast(data.message);
-        setStatus(data.message);
         fetchServerFiles();
       } else {
         setStatus(data.error || "Không thể xóa file.");
@@ -139,21 +142,20 @@ export default function UploadToServer() {
   };
 
   return (
-    <div className="flex mt-[90px] flex-col w-[600px] gap-6">
+    <div className="flex mt-[90px] flex-col w-[800px] gap-6">
       {!token ? (
         <div className="mt-[5rem]">
           <Alert variant="destructive">
             <TriangleAlert />
-            <AlertTitle>
-              You need to log in to upload and manage your files.
-            </AlertTitle>
+            <AlertTitle>Bạn cần đăng nhập để tải file.</AlertTitle>
             <AlertDescription>
-              You can read docs before use service
+              Hãy đăng nhập để sử dụng chức năng upload và quản lý file.
             </AlertDescription>
           </Alert>
         </div>
       ) : (
         <>
+          {/* Khu vực chọn file */}
           <div
             onDrop={handleDrop}
             className="relative flex min-h-52 flex-col items-center justify-center overflow-hidden rounded-xl border border-dashed border-input p-4 transition-colors"
@@ -162,21 +164,22 @@ export default function UploadToServer() {
             <div className="text-center">
               <UploadIcon className="mb-2 size-8 opacity-60 mx-auto" />
               <p className="text-sm font-medium">
-                Drag and drop or select files
+                Kéo thả hoặc chọn file để tải lên
               </p>
               <p className="text-xs text-muted-foreground">
-                (Maximum 5MB, 30 files)
+                (Tối đa 5MB mỗi file, tối đa 30 file)
               </p>
               <Button
                 variant="outline"
                 className="mt-4"
                 onClick={openFileDialog}
               >
-                Choose file
+                Chọn file
               </Button>
             </div>
           </div>
 
+          {/* Danh sách file chuẩn bị upload */}
           {files.length > 0 && (
             <div className="space-y-2">
               {files.map((file) => (
@@ -201,12 +204,16 @@ export default function UploadToServer() {
                       </p>
                     </div>
                   </div>
+
+                  {/* Nhập tên file tùy chỉnh */}
                   <Input
                     type="text"
-                    placeholder="Nhập tiêu đề..."
+                    placeholder="Nhập tên file..."
+                    defaultValue={file.file.name}
                     className="border rounded px-2 py-1 text-sm w-48"
                     onChange={(e) => (file.title = e.target.value)}
                   />
+
                   <Button
                     size="icon"
                     variant="ghost"
@@ -232,7 +239,8 @@ export default function UploadToServer() {
             </div>
           )}
 
-          <ScrollArea className="h-[340px] px-4 ">
+          {/* Danh sách file đã có trên server */}
+          <ScrollArea className="h-[340px] px-4">
             <ul className="space-y-2">
               {serverFiles.map((file) => {
                 const fileUrl = `http://127.0.0.1:8000/download/${encodeURIComponent(
@@ -245,7 +253,7 @@ export default function UploadToServer() {
                 return (
                   <li
                     key={file.name}
-                    className="flex items-center justify-between  border-input border rounded-md px-3 py-2"
+                    className="flex items-center justify-between border-input border rounded-md px-3 py-2"
                   >
                     <div className="flex items-center gap-3">
                       {isImage && (
@@ -255,27 +263,56 @@ export default function UploadToServer() {
                           className="w-10 h-10 rounded-md object-cover"
                         />
                       )}
-                      <span className="text-sm"> {file.name}</span>
+                      <span className="text-sm">{file.name}</span>
                     </div>
                     <div className="flex gap-2">
                       <Button
                         size="sm"
-                        className="items-center hover:bg-muted! bg-black! flex"
                         variant="outline"
                         onClick={() => window.open(fileUrl, "_blank")}
                       >
-                        Download
                         <Download />
+                        Download
                       </Button>
                       <Button
                         size="sm"
-                        className="items-center hover:bg-muted! bg-black! flex"
                         variant="outline"
                         onClick={() => handleDeleteFile(file.name)}
                       >
                         <Trash />
                         Delete
                       </Button>
+                      {}
+                      <Button
+                        variant={"outline"}
+                        size={"icon-sm"}
+                        onClick={() => setEdit(!edit)}
+                      >
+                        <Edit />
+                      </Button>
+                      {edit && (
+                        <div className="flex gap-4 items-center">
+                          <Button
+                            className="pr-0! justify-between  pl-2"
+                            variant={"outline"}
+                          >
+                            <Input
+                              type="text"
+                              placeholder="Nhập tên file..."
+                              defaultValue={file.name}
+                              className="border rounded px-2 py-1 text-sm w-full"
+                              onChange={(e) => (file.title = e.target.value)}
+                            />
+                          </Button>
+                          <Button
+                            variant={"outline"}
+                            size={"sm"}
+                            onClick={handleUploadToServer}
+                          >
+                            Change
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </li>
                 );
