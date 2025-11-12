@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, Form, Query
+from fastapi import FastAPI, UploadFile, File, Form, Query, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import os, shutil, urllib.parse
@@ -51,14 +51,12 @@ async def upload_files(
     files: List[UploadFile] = File(...),
     titles: List[str] = Form(...),
 ):
-    # Mã hóa email để làm tên thư mục
     encoded_email = urllib.parse.quote(user_email, safe="")
     user_folder = os.path.join(BASE_DIR, encoded_email)
     os.makedirs(user_folder, exist_ok=True)
 
     saved_files = []
     for file, title in zip(files, titles):
-        # Dùng tên nhập trong input làm tên file (nếu có)
         filename = f"{title.strip()}{os.path.splitext(file.filename)[1]}"
         file_path = os.path.join(user_folder, filename)
 
@@ -68,6 +66,30 @@ async def upload_files(
         saved_files.append({"name": filename, "title": title})
 
     return {"message": f"Tải lên {len(saved_files)} file thành công!", "files": saved_files}
+
+
+# ✏️ Đổi tên file (sử dụng PUT /upload)
+@app.put("/upload")
+async def rename_file(
+    user_email: str = Form(...),
+    old_name: str = Form(...),
+    new_name: str = Form(...),
+):
+    encoded_email = urllib.parse.quote(user_email, safe="")
+    user_folder = os.path.join(BASE_DIR, encoded_email)
+
+    old_path = os.path.join(user_folder, old_name)
+    ext = os.path.splitext(old_name)[1]  # Giữ lại phần mở rộng cũ
+    new_path = os.path.join(user_folder, f"{new_name}{ext}")
+
+    if not os.path.exists(old_path):
+        raise HTTPException(status_code=404, detail="File không tồn tại!")
+
+    if os.path.exists(new_path):
+        raise HTTPException(status_code=400, detail="Tên file mới đã tồn tại!")
+
+    os.rename(old_path, new_path)
+    return {"message": f"Đã đổi tên '{old_name}' thành '{new_name}{ext}' thành công!"}
 
 
 # 📄 Danh sách file của 1 người dùng
