@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -10,6 +10,11 @@ import {
   Trash,
   Download,
   Edit,
+  View,
+  FolderPen,
+  User,
+  Check,
+  ChevronsUpDown,
 } from "lucide-react";
 import Image from "next/image";
 import { useFileUpload, formatBytes } from "@/hooks/use-file-upload";
@@ -17,18 +22,67 @@ import { useSession } from "../lib/auth-client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { cn } from "@/lib/utils";
+const frameworks = [
+  {
+    value: "next.js",
+    label: "Next.js",
+  },
+  {
+    value: "sveltekit",
+    label: "SvelteKit",
+  },
+  {
+    value: "nuxt.js",
+    label: "Nuxt.js",
+  },
+  {
+    value: "remix",
+    label: "Remix",
+  },
+  {
+    value: "astro",
+    label: "Astro",
+  },
+];
 
 export default function UploadToServer() {
   const { data: session } = useSession();
   const token = session?.session?.token;
+  const [login, setLogin] = useState(token ? true : false);
   const userEmail = session?.user?.email;
-  const [customName,setCustomName]= useState("");
+  const [customName, setCustomName] = useState("");
   const [uploading, setUploading] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [serverFiles, setServerFiles] = useState<
     { name: string; title?: string }[]
   >([]);
+  const [open, setOpen] = React.useState(false);
+  const [value, setValue] = React.useState("");
 
   // 🔧 State đổi tên file
   const [editingFile, setEditingFile] = useState<string | null>(null);
@@ -76,14 +130,13 @@ export default function UploadToServer() {
     const formData = new FormData();
     formData.append("user_email", userEmail);
 
-   files.forEach((f) => {
-     if (f.file instanceof File) {
-       formData.append("files", f.file);
-       const newName = f.title?.trim() || f.file.name; // tên người dùng nhập
-       formData.append("titles", newName);
-     }
-   });
-
+    files.forEach((f) => {
+      if (f.file instanceof File) {
+        formData.append("files", f.file);
+        const newName = f.title?.trim() || f.file.name;
+        formData.append("titles", newName);
+      }
+    });
 
     try {
       setUploading(true);
@@ -183,7 +236,7 @@ export default function UploadToServer() {
 
   return (
     <div className="flex mt-[90px] flex-col w-[800px] gap-6">
-      {!token ? (
+      {!login ? (
         <div className="mt-[5rem]">
           <Alert variant="destructive">
             <TriangleAlert />
@@ -214,85 +267,148 @@ export default function UploadToServer() {
                     Upload
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent className="max-w-[700px]! ">
+                <AlertDialogContent className="max-w-[900px]! ">
                   <AlertDialogHeader>
-                    <AlertDialogTitle className="flex w-full pb-4 justify-between">
-                      <Button variant={"outline"} onClick={openFileDialog}>
+                    <AlertDialogCancel className="self-end border-none! dark:bg-none!">
+                      <XIcon></XIcon>
+                    </AlertDialogCancel>
+                    <AlertDialogTitle className="flex w-full pb-4 justify-center">
+                      <Button
+                        variant={"outline"}
+                        size={"sm"}
+                        onClick={openFileDialog}
+                      >
                         Select file
                       </Button>
-                      <AlertDialogCancel  className="self-end">
-<XIcon></XIcon>
-                      </AlertDialogCancel>
                     </AlertDialogTitle>
+
                     {files.length > 0 && (
                       <div className="space-y-2">
-                        {files.map((file) => (
-                          <div
-                            key={file.id}
-                            className="flex items-center justify-between gap-2 rounded-lg border bg-background p-2 pe-3"
-                          >
-                            <div className="flex items-center gap-3 overflow-hidden">
-                              <Image
-                                src={String(file.preview)}
-                                alt={file.file.name}
-                                width={40}
-                                height={40}
-                                className="rounded-md object-cover"
-                              />
-                              <div className="flex flex-col gap-0.5 min-w-0">
-                                <p className=" text-[13px] font-medium">
-                                  {file.file.name}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {formatBytes(file.file.size)}
-                                </p>
-                              </div>
-                            </div>
-
-                            <Input
-                              type="text"
-                              placeholder="Nhập tên file..."
-                              defaultValue={file.file.name.replace(
-                                /\.[^/.]+$/,
-                                ""
-                              )} // bỏ phần .png, .jpg,...
-                              className="border rounded px-2 py-1 text-sm w-fit"
-                              onChange={(e) => (file.title = e.target.value)}
-                            />
-
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => removeFile(file.id)}
+                        <ScrollArea className="h-[400px] flex flex-col gap-4 space-y-2">
+                          {files.map((file) => (
+                            <div
+                              key={file.id}
+                              className="flex my-4 mx-4 items-center justify-between gap-2 rounded-lg border bg-background p-2 pe-3"
                             >
-                              <XIcon />
-                            </Button>
-                          </div>
-                        ))}
+                              <div className="flex items-center gap-3 overflow-hidden">
+                                <Image
+                                  src={String(file.preview)}
+                                  alt={file.file.name}
+                                  width={40}
+                                  height={40}
+                                  className="rounded-md object-cover"
+                                />
+                                <div className="flex flex-col gap-0.5 min-w-0">
+                                  <p className=" text-[13px] font-medium">
+                                    {file.file.name}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {formatBytes(file.file.size)}
+                                  </p>
+                                </div>
+                              </div>
+                              <Popover open={open} onOpenChange={setOpen}>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    aria-expanded={open}
+                                    className="w-[200px] justify-between"
+                                  >
+                                    {value
+                                      ? frameworks.find(
+                                          (framework) =>
+                                            framework.value === value
+                                        )?.label
+                                      : "Select framework..."}
+                                    <ChevronsUpDown className="opacity-50" />
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[200px] p-0">
+                                  <Command>
+                                    <CommandInput
+                                      placeholder="Search framework..."
+                                      className="h-9"
+                                    />
+                                    <CommandList>
+                                      <CommandEmpty>
+                                        No framework found.
+                                      </CommandEmpty>
+                                      <CommandGroup>
+                                        {frameworks.map((framework) => (
+                                          <CommandItem
+                                            key={framework.value}
+                                            value={framework.value}
+                                            onSelect={(currentValue) => {
+                                              setValue(
+                                                currentValue === value
+                                                  ? ""
+                                                  : currentValue
+                                              );
+                                              setOpen(false);
+                                            }}
+                                          >
+                                            {framework.label}
+                                            <Check
+                                              className={cn(
+                                                "ml-auto",
+                                                value === framework.value
+                                                  ? "opacity-100"
+                                                  : "opacity-0"
+                                              )}
+                                            />
+                                          </CommandItem>
+                                        ))}
+                                      </CommandGroup>
+                                    </CommandList>
+                                  </Command>
+                                </PopoverContent>
+                              </Popover>
+                              <Input
+                                type="text"
+                                placeholder="Nhập tên file..."
+                                defaultValue={file.file.name.replace(
+                                  /\.[^/.]+$/,
+                                  ""
+                                )} // bỏ phần .png, .jpg,...
+                                className="border rounded px-2 py-1 text-sm w-fit"
+                                onChange={(e) => (file.title = e.target.value)}
+                              />
+
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => removeFile(file.id)}
+                              >
+                                <XIcon />
+                              </Button>
+                            </div>
+                          ))}
+                        </ScrollArea>
 
                         <div className="flex items-center pt-4 justify-between">
-                        <div className="flex gap-4 items-center">
+                          <div className="flex gap-4 items-center">
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
                             </AlertDialogFooter>
-                            <AlertDialogFooter><AlertDialogCancel
-                              
-                              onClick={handleUploadToServer}
-                              disabled={uploading}
-                            >
-                              {uploading ? "Đang tải lên..." : "Upload"}
-                            </AlertDialogCancel></AlertDialogFooter> 
-                        </div>
-                      
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={clearFiles}
-                            >
-                              Delete All
-                            </Button>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel
+                                onClick={handleUploadToServer}
+                                disabled={uploading}
+                              >
+                                {uploading ? "Đang tải lên..." : "Upload"}
+                              </AlertDialogCancel>
+                            </AlertDialogFooter>
                           </div>
-                      
+
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={clearFiles}
+                          >
+                            Delete All
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </AlertDialogHeader>
@@ -337,6 +453,44 @@ export default function UploadToServer() {
                     </div>
 
                     <div className="flex gap-2">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant={"outline"} size={"sm"}>
+                            {" "}
+                            <View />
+                            View
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="max-w-[800px]! ">
+                          <AlertDialogHeader className="w-full">
+                            <AlertDialogTitle className="flex w-full gap-6">
+                              {isImage && (
+                                <img
+                                  src={fileUrl}
+                                  alt={file.name}
+                                  className="w-[300px] h-[300px] rounded-md object-cover"
+                                />
+                              )}
+                              <div className="flex text-sm justify-center items-center w-full font-normal flex-col gap-1">
+                                <p className="flex gap-2 items-center">
+                                  <FolderPen className="size-4" />:{" "}
+                                  <p className="text-[#a1a1a1]">{file.name}</p>
+                                </p>
+                                <p className="flex gap-2 items-center">
+                                  <User className="size-4" />:
+                                  <p className="text-[#a1a1a1]">
+                                    {session?.user.email}
+                                  </p>
+                                </p>
+                              </div>
+                            </AlertDialogTitle>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+
                       {editingFile === file.name ? (
                         <>
                           <Button
