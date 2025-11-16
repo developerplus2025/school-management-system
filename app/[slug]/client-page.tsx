@@ -9,7 +9,7 @@ export default function ClientPage({ slug }: { slug: string }) {
   const { data: session, } = useSession();
 
  
-  if (!session) return <div>Bạn cần đăng nhập</div>;
+  if (!session) return notFound();
 
   const email = session.user.email.replace("@", "%40");
   console.log(slug)

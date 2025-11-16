@@ -5,6 +5,28 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+  InputGroupText,
+  InputGroupTextarea,
+} from "@/components/ui/input-group";
+import { ListStart, Search } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 type FileItem = { filename: string; download_url: string; user_id?: string };
 
 const data: Record<string, { icon: JSX.Element }> = {
@@ -171,6 +193,28 @@ const data: Record<string, { icon: JSX.Element }> = {
 
 export default function HomeSearchPage() {
   const [query, setQuery] = useState("");
+  const [copy, setCopy] = useState(false);
+  const [downloadUrl, setDownloadUrl] = useState("");
+  function copyLink() {
+    navigator.clipboard.writeText(downloadUrl);
+    toast("Link Copied", {
+      action: {
+        label: "Close",
+        onClick: () => "",
+      },
+    });
+
+    setTimeout(
+      () => {
+        setCopy(false);
+      },
+
+      1500
+    );
+
+    setCopy(true);
+  }
+  const [index, setIndex] = useState(0);
   const [results, setResults] = useState<
     { filename: string; user_email: string; download_url: string }[]
   >([]);
@@ -189,12 +233,15 @@ export default function HomeSearchPage() {
 
       const res = await fetch(url);
       const data = await res.json();
-      console.log(data);
+
       setResults(data.results || []);
     } catch (err) {
       console.error("Lỗi khi tìm kiếm:", err);
     } finally {
-      setLoading(false);
+      setIndex(results.length);
+      setTimeout(() => {
+        setLoading(false);
+      }, 200);
     }
   };
 
@@ -216,12 +263,20 @@ export default function HomeSearchPage() {
     <div className="w-full h-[calc(100vh-60px)] pt-12 px-12 mx-auto  flex flex-col items-center gap-6">
       {/* Thanh tìm kiếm */}
       <div className="flex w-full justify-center gap-8">
-        <Input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Enter file name to search..."
-          className="w-[500px]"
-        />
+        <InputGroup className="w-fit bg-black!">
+          <InputGroupInput
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Enter file name to search..."
+            className="w-[500px] "
+          />
+          <InputGroupAddon>
+            {loading ? <Spinner /> : <Search />}
+          </InputGroupAddon>
+          <InputGroupAddon className="w-[100px]" align="inline-end">
+            Results: {loading ? <Spinner /> : results.length}
+          </InputGroupAddon>
+        </InputGroup>
       </div>
 
       <ul>
@@ -231,11 +286,10 @@ export default function HomeSearchPage() {
           </p>
         )}
 
-        <ScrollArea className="h-[500px] px-4 ">
+        <ScrollArea className="h-[500px] px-4  ">
           {" "}
-          <div className="grid grid-cols-1 w-full justify-items-center gap-8">
+          <div className="grid grid-cols-4 place-content-center place-items-center w-full justify-items-center gap-8">
             {results.map((file, idx) => {
-              // ✅ 1. Kiểm tra xem có phải hình ảnh không
               const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(file.filename);
 
               // ✅ 2. Lấy phần mở rộng file (luôn đảm bảo là string)
@@ -246,28 +300,15 @@ export default function HomeSearchPage() {
               return (
                 <li
                   key={idx}
-                  className="flex border w-[700px] border-input flex-col gap-4   rounded-md p-3"
+                  className="flex border h-full w-[300px] justify-between border-input flex-col gap-4   rounded-md p-3"
                 >
                   <div className="flex flex-col w-full items-center gap-3">
-                    {/* ✅ Hiển thị icon dựa vào phần mở rộng */}
-
-                    {/* ✅ Nếu là hình ảnh thì hiển thị preview */}
-                    {/* {isImage && (
-                      <img
-                        loading="lazy"
-                        src={file.download_url}
-                        alt={file.filename}
-                        className="w-[200px] h-[200px] rounded-md object-cover"
-                      />
-                    )} */}
-
-                    {/* ✅ Thông tin file (ẩn mặc định) */}
-                    <div className="flex gap-8 w-full">
+                    <div className="flex gap-4 items-center w-full">
                       <div className="">
                         {data[ext]?.icon || data.unknown.icon}
                       </div>
-                      <div className="">
-                        <p className="font-medium text-sm ">{file.filename}</p>
+                      <div className="flex flex-col gap-1">
+                        <p className="font-medium text-xs ">{file.filename}</p>
                         <p className="text-xs text-muted-foreground">
                           User: {file.user_email}
                         </p>
@@ -276,7 +317,7 @@ export default function HomeSearchPage() {
                   </div>
 
                   {/* ✅ Các nút chức năng */}
-                  <div className="flex gap-8 w-fit justify-between">
+                  <div className="flex  w-full justify-between">
                     <Button
                       size="sm"
                       variant="outline"
@@ -284,12 +325,75 @@ export default function HomeSearchPage() {
                     >
                       Download
                     </Button>
+
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          onClick={() => {
+                            setIndex(idx);
+                            console.log(index);
+                          }}
+                          size="sm"
+                          variant="outline"
+                        >
+                          View More
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>File Preview</AlertDialogTitle>
+                        </AlertDialogHeader>
+                        <div>
+                          <img
+                            className="rounded-lg"
+                            src={results[index].download_url}
+                            alt=""
+                          />
+                        </div>
+                        <AlertDialogFooter className="flex w-full xl:justify-between">
+                          <Button
+                            onClick={() => {
+                              setIndex(index - 1);
+                              console.log(index);
+                            }}
+                            variant={"outline"}
+                            size={"sm"}
+                            className={` ${
+                              index == 0
+                                ? "disabled:bg-accent! pointer-events-none"
+                                : ""
+                            }`}
+                          >
+                            Prev File
+                          </Button>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <Button
+                            onClick={() => {
+                              setIndex(index + 1);
+                              console.log(index);
+                            }}
+                            variant={"outline"}
+                            size={"sm"}
+                            className={` ${
+                              index + 1 == results.length
+                                ? "disabled:bg-accent! pointer-events-none"
+                                : ""
+                            }`}
+                          >
+                            Next File
+                          </Button>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => window.open(file.download_url, "_blank")}
+                      onClick={() => {
+                        copyLink();
+                        setDownloadUrl(file.download_url);
+                      }}
                     >
-                      View More
+                      Share
                     </Button>
                   </div>
                 </li>
