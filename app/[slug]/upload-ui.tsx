@@ -70,7 +70,13 @@ const frameworks = [
     label: "Astro",
   },
 ];
-
+const labels = [
+  { value: "math", label: "Math" },
+  { value: "physics", label: "Physics" },
+  { value: "chemistry", label: "Chemistry" },
+  { value: "english", label: "English" },
+  { value: "history", label: "History" },
+];
 
 export default function UploadToServer() {
   const { data: session } = useSession();
@@ -81,7 +87,7 @@ export default function UploadToServer() {
   const [uploading, setUploading] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [serverFiles, setServerFiles] = useState<
-    { name: string; title?: string }[]
+    { name: string; title?: string; lable: string }[]
   >([]);
   const [open, setOpen] = React.useState(false);
   const [value, setValue] = React.useState("");
@@ -92,7 +98,14 @@ export default function UploadToServer() {
 
   const [
     { files },
-    { handleDrop, openFileDialog, removeFile, clearFiles, getInputProps },
+    {
+      handleDrop,
+      openFileDialog,
+      removeFile,
+      clearFiles,
+      getInputProps,
+      setFileLabel,
+    },
   ] = useFileUpload({ multiple: true, maxSize: 5 * 1024 * 1024, maxFiles: 30 });
 
   // 🧩 Lấy danh sách file từ server
@@ -137,6 +150,8 @@ export default function UploadToServer() {
         formData.append("files", f.file);
         const newName = f.title?.trim() || f.file.name;
         formData.append("titles", newName);
+        formData.append("labels", f.label || "none");
+        console.log(f.label);
       }
     });
 
@@ -309,56 +324,43 @@ export default function UploadToServer() {
                                   </p>
                                 </div>
                               </div>
-                              <Popover open={open} onOpenChange={setOpen}>
+                              <Popover>
                                 <PopoverTrigger asChild>
                                   <Button
                                     variant="outline"
-                                    role="combobox"
-                                    aria-expanded={open}
-                                    className="w-[200px] justify-between"
+                                    className="w-[160px] justify-between"
                                   >
-                                    {value
-                                      ? frameworks.find(
-                                          (framework) =>
-                                            framework.value === value
+                                    {file.label
+                                      ? labels.find(
+                                          (l) => l.value === file.label
                                         )?.label
-                                      : "Select framework..."}
+                                      : "Select label"}
                                     <ChevronsUpDown className="opacity-50" />
                                   </Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-[200px] p-0">
+
+                                <PopoverContent className="w-[160px] p-0">
                                   <Command>
                                     <CommandInput
-                                      placeholder="Search framework..."
+                                      placeholder="Search label..."
                                       className="h-9"
                                     />
                                     <CommandList>
                                       <CommandEmpty>
-                                        No framework found.
+                                        No label found.
                                       </CommandEmpty>
                                       <CommandGroup>
-                                        {frameworks.map((framework) => (
+                                        {labels.map((lb) => (
                                           <CommandItem
-                                            key={framework.value}
-                                            value={framework.value}
-                                            onSelect={(currentValue) => {
-                                              setValue(
-                                                currentValue === value
-                                                  ? ""
-                                                  : currentValue
-                                              );
-                                              setOpen(false);
+                                            defaultValue={"Math"}
+                                            key={lb.value}
+                                            value={lb.value}
+                                            onClick={() => setOpen(false)}
+                                            onSelect={(value) => {
+                                              setFileLabel(file.id, value);
                                             }}
                                           >
-                                            {framework.label}
-                                            <Check
-                                              className={cn(
-                                                "ml-auto",
-                                                value === framework.value
-                                                  ? "opacity-100"
-                                                  : "opacity-0"
-                                              )}
-                                            />
+                                            {lb.label}
                                           </CommandItem>
                                         ))}
                                       </CommandGroup>
@@ -366,13 +368,14 @@ export default function UploadToServer() {
                                   </Command>
                                 </PopoverContent>
                               </Popover>
+
                               <Input
                                 type="text"
                                 placeholder="Nhập tên file..."
                                 defaultValue={file.file.name.replace(
                                   /\.[^/.]+$/,
                                   ""
-                                )} // bỏ phần .png, .jpg,...
+                                )}
                                 className="border rounded px-2 py-1 text-sm w-fit"
                                 onChange={(e) => (file.title = e.target.value)}
                               />

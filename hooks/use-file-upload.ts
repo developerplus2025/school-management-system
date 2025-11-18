@@ -17,6 +17,7 @@ export type FileMetadata = {
   url: string;
   id: string;
   title: string;
+  label?: string;
 };
 
 export type FileWithPreview = {
@@ -24,6 +25,7 @@ export type FileWithPreview = {
   id: string;
   preview?: string;
   title: string;
+  label?: string;
 };
 
 export type FileUploadOptions = {
@@ -41,7 +43,6 @@ export type FileUploadState = {
   isDragging: boolean;
   errors: string[];
 };
-
 export type FileUploadActions = {
   addFiles: (files: FileList | File[]) => void;
   removeFile: (id: string) => void;
@@ -56,9 +57,11 @@ export type FileUploadActions = {
   getInputProps: (
     props?: InputHTMLAttributes<HTMLInputElement>
   ) => InputHTMLAttributes<HTMLInputElement> & {
-    // Use `any` here to avoid cross-React ref type conflicts across packages
-    ref: any;
+    ref: never;
   };
+
+  /** 👇 Hàm mới thêm vào để set label cho file */
+  setFileLabel: (id: string, label: string) => void;
 };
 
 export const useFileUpload = (
@@ -80,6 +83,7 @@ export const useFileUpload = (
       id: file.id,
       preview: file.url,
       title: file.title,
+      label: file.label ?? "",
     })),
     isDragging: false,
     errors: [],
@@ -251,6 +255,7 @@ export const useFileUpload = (
             id: generateUniqueId(file),
             preview: createPreview(file),
             title: createTitle(file),
+            label: "",
           });
         }
       });
@@ -390,7 +395,18 @@ export const useFileUpload = (
       inputRef.current.click();
     }
   }, []);
-
+  const setFileLabel = useCallback(
+    (id: string, label: string) => {
+      setState((prev) => {
+        const updated = prev.files.map((f) =>
+          f.id === id ? { ...f, label } : f
+        );
+        onFilesChange?.(updated);
+        return { ...prev, files: updated };
+      });
+    },
+    [onFilesChange]
+  );
   const getInputProps = useCallback(
     (props: InputHTMLAttributes<HTMLInputElement> = {}) => {
       return {
@@ -400,7 +416,7 @@ export const useFileUpload = (
         accept: props.accept || accept,
         multiple: props.multiple !== undefined ? props.multiple : multiple,
         // Cast to `any` to prevent mismatched React ref type errors across workspaces
-        ref: inputRef as any,
+        ref: inputRef as never,
       };
     },
     [accept, multiple, handleFileChange]
@@ -420,6 +436,7 @@ export const useFileUpload = (
       handleFileChange,
       openFileDialog,
       getInputProps,
+      setFileLabel,
     },
   ];
 };

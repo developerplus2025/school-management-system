@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
+
 import {
   InputGroup,
   InputGroupAddon,
@@ -13,7 +14,7 @@ import {
   InputGroupText,
   InputGroupTextarea,
 } from "@/components/ui/input-group";
-import { ListStart, Search } from "lucide-react";
+import { icons, ListStart, Search } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 import {
@@ -27,6 +28,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { FileIcon } from "react-file-icon";
+import { Badge } from "@/components/ui/badge";
 type FileItem = { filename: string; download_url: string; user_id?: string };
 
 const data: Record<string, { icon: JSX.Element }> = {
@@ -190,10 +193,133 @@ const data: Record<string, { icon: JSX.Element }> = {
     ),
   },
 };
+const dataFilter = [
+  {
+    id: 1,
+    value: "math",
+    name: "Math",
+    icons: (
+      <svg
+        data-testid="geist-icon"
+        height={16}
+        strokeLinejoin="round"
+        viewBox="0 0 16 16"
+        width={16}
+        style={{
+          color: "currentcolor",
+        }}
+      >
+        <path
+          fillRule="evenodd"
+          clipRule="evenodd"
+          d="M14.4572 8.75C14.0853 11.9866 11.3362 14.5 8 14.5C4.41015 14.5 1.5 11.5899 1.5 8C1.5 4.66381 4.01342 1.91465 7.25 1.5428V7.75C7.25 8.30229 7.69772 8.75 8.25 8.75H14.4572ZM14.4572 7.25H8.75V1.5428C11.7405 1.88638 14.1136 4.2595 14.4572 7.25ZM16 8C16 12.4183 12.4183 16 8 16C3.58172 16 0 12.4183 0 8C0 3.58172 3.58172 0 8 0C12.4183 0 16 3.58172 16 8Z"
+          fill="currentColor"
+        />
+      </svg>
+    ),
+  },
+  {
+    id: 2,
+    value: "physical",
+    name: "Physical",
+    icons: (
+      <svg
+        data-testid="geist-icon"
+        height={16}
+        strokeLinejoin="round"
+        viewBox="0 0 16 16"
+        width={16}
+        style={{
+          color: "currentcolor",
+        }}
+      >
+        <path
+          fillRule="evenodd"
+          clipRule="evenodd"
+          d="M2.67705 15H1L1.75 13.5L6.16147 4.67705L6.15836 4.67082L6.16667 4.66667L7.16147 2.67705L8 1L8.83853 2.67705L14.25 13.5L15 15H13.3229H2.67705ZM7 6.3541L10.5729 13.5H3.42705L7 6.3541Z"
+          fill="currentColor"
+        />
+      </svg>
+    ),
+  },
+  {
+    id: 3,
+    value: "chemistry",
+    name: "Chemistry",
+    icons: (
+      <svg
+        data-testid="geist-icon"
+        height={16}
+        strokeLinejoin="round"
+        viewBox="0 0 16 16"
+        width={16}
+        style={{
+          color: "currentcolor",
+        }}
+      >
+        <path
+          fillRule="evenodd"
+          clipRule="evenodd"
+          d="M9 7.6736V7V2.5H7V7V7.6736L6.49655 8.12111L4.38279 10L11.6172 10L9.50345 8.12111L9 7.6736ZM5.5 2.5H4V1H5.5H7H9H10.5H12V2.5H10.5V7L14.0735 10.1765C14.6628 10.7003 15 11.4511 15 12.2396C15 13.7641 13.7641 15 12.2396 15H3.7604C2.23587 15 1 13.7641 1 12.2396C1 11.4511 1.33718 10.7003 1.92649 10.1765L5.5 7V2.5ZM2.5 12.2396C2.5 11.9717 2.58527 11.7133 2.7398 11.5L13.2602 11.5C13.4147 11.7133 13.5 11.9717 13.5 12.2396C13.5 12.9357 12.9357 13.5 12.2396 13.5H3.7604C3.0643 13.5 2.5 12.9357 2.5 12.2396Z"
+          fill="currentColor"
+        />
+      </svg>
+    ),
+  },
+  {
+    id: 4,
+    value: "computer-science",
+    name: "Computer-science",
+    icons: (
+      <svg
+        data-testid="geist-icon"
+        height={16}
+        strokeLinejoin="round"
+        viewBox="0 0 16 16"
+        width={16}
+        style={{
+          color: "currentcolor",
+        }}
+      >
+        <path
+          fillRule="evenodd"
+          clipRule="evenodd"
+          d="M0 2C0 1.44772 0.447715 1 1 1H15C15.5523 1 16 1.44772 16 2V10.5C16 11.0523 15.5523 11.5 15 11.5H8.75V14.5H9.75H10.5V16H9.75H6.25H5.5V14.5H6.25H7.25V11.5H1C0.447714 11.5 0 11.0523 0 10.5V2ZM1.5 2.5V10H14.5V2.5H1.5Z"
+          fill="currentColor"
+        />
+      </svg>
+    ),
+  },
+  {
+    id: 5,
+    value: "english",
+    name: "English",
+    icons: (
+      <svg
+        data-testid="geist-icon"
+        height={16}
+        strokeLinejoin="round"
+        viewBox="0 0 16 16"
+        width={16}
+        style={{
+          color: "currentcolor",
+        }}
+      >
+        <path
+          fillRule="evenodd"
+          clipRule="evenodd"
+          d="M10.268 14.0934C11.9051 13.4838 13.2303 12.2333 13.9384 10.6469C13.1192 10.7941 12.2138 10.9111 11.2469 10.9925C11.0336 12.2005 10.695 13.2621 10.268 14.0934ZM8 16C12.4183 16 16 12.4183 16 8C16 3.58172 12.4183 0 8 0C3.58172 0 0 3.58172 0 8C0 12.4183 3.58172 16 8 16ZM8.48347 14.4823C8.32384 14.494 8.16262 14.5 8 14.5C7.83738 14.5 7.67616 14.494 7.51654 14.4823C7.5132 14.4791 7.50984 14.4759 7.50647 14.4726C7.2415 14.2165 6.94578 13.7854 6.67032 13.1558C6.41594 12.5744 6.19979 11.8714 6.04101 11.0778C6.67605 11.1088 7.33104 11.125 8 11.125C8.66896 11.125 9.32395 11.1088 9.95899 11.0778C9.80021 11.8714 9.58406 12.5744 9.32968 13.1558C9.05422 13.7854 8.7585 14.2165 8.49353 14.4726C8.49016 14.4759 8.4868 14.4791 8.48347 14.4823ZM11.4187 9.72246C12.5137 9.62096 13.5116 9.47245 14.3724 9.28806C14.4561 8.87172 14.5 8.44099 14.5 8C14.5 7.55901 14.4561 7.12828 14.3724 6.71194C13.5116 6.52755 12.5137 6.37904 11.4187 6.27753C11.4719 6.83232 11.5 7.40867 11.5 8C11.5 8.59133 11.4719 9.16768 11.4187 9.72246ZM10.1525 6.18401C10.2157 6.75982 10.25 7.36805 10.25 8C10.25 8.63195 10.2157 9.24018 10.1525 9.81598C9.46123 9.85455 8.7409 9.875 8 9.875C7.25909 9.875 6.53877 9.85455 5.84749 9.81598C5.7843 9.24018 5.75 8.63195 5.75 8C5.75 7.36805 5.7843 6.75982 5.84749 6.18401C6.53877 6.14545 7.25909 6.125 8 6.125C8.74091 6.125 9.46123 6.14545 10.1525 6.18401ZM11.2469 5.00748C12.2138 5.08891 13.1191 5.20593 13.9384 5.35306C13.2303 3.7667 11.9051 2.51622 10.268 1.90662C10.695 2.73788 11.0336 3.79953 11.2469 5.00748ZM8.48347 1.51771C8.4868 1.52089 8.49016 1.52411 8.49353 1.52737C8.7585 1.78353 9.05422 2.21456 9.32968 2.84417C9.58406 3.42562 9.80021 4.12856 9.95899 4.92219C9.32395 4.89118 8.66896 4.875 8 4.875C7.33104 4.875 6.67605 4.89118 6.04101 4.92219C6.19978 4.12856 6.41594 3.42562 6.67032 2.84417C6.94578 2.21456 7.2415 1.78353 7.50647 1.52737C7.50984 1.52411 7.51319 1.52089 7.51653 1.51771C7.67615 1.50597 7.83738 1.5 8 1.5C8.16262 1.5 8.32384 1.50597 8.48347 1.51771ZM5.73202 1.90663C4.0949 2.51622 2.76975 3.7667 2.06159 5.35306C2.88085 5.20593 3.78617 5.08891 4.75309 5.00748C4.96639 3.79953 5.30497 2.73788 5.73202 1.90663ZM4.58133 6.27753C3.48633 6.37904 2.48837 6.52755 1.62761 6.71194C1.54392 7.12828 1.5 7.55901 1.5 8C1.5 8.44099 1.54392 8.87172 1.62761 9.28806C2.48837 9.47245 3.48633 9.62096 4.58133 9.72246C4.52807 9.16768 4.5 8.59133 4.5 8C4.5 7.40867 4.52807 6.83232 4.58133 6.27753ZM4.75309 10.9925C3.78617 10.9111 2.88085 10.7941 2.06159 10.6469C2.76975 12.2333 4.0949 13.4838 5.73202 14.0934C5.30497 13.2621 4.96639 12.2005 4.75309 10.9925Z"
+          fill="currentColor"
+        />
+      </svg>
+    ),
+  },
+];
 
 export default function HomeSearchPage() {
   const [query, setQuery] = useState("");
   const [copy, setCopy] = useState(false);
+  const [filter, setFilter] = useState("math");
   const [downloadUrl, setDownloadUrl] = useState("");
   function copyLink() {
     navigator.clipboard.writeText(downloadUrl);
@@ -216,7 +342,13 @@ export default function HomeSearchPage() {
   }
   const [index, setIndex] = useState(0);
   const [results, setResults] = useState<
-    { filename: string; user_email: string; download_url: string }[]
+    {
+      filename: string;
+      user_email: string;
+      download_url: string;
+      title: string;
+      label: string;
+    }[]
   >([]);
   const [loading, setLoading] = useState(false);
 
@@ -233,7 +365,7 @@ export default function HomeSearchPage() {
 
       const res = await fetch(url);
       const data = await res.json();
-
+      console.log(data);
       setResults(data.results || []);
     } catch (err) {
       console.error("Lỗi khi tìm kiếm:", err);
@@ -248,7 +380,7 @@ export default function HomeSearchPage() {
   // 🔹 Gọi API khi trang load lần đầu (lấy toàn bộ file)
   useEffect(() => {
     handleSearch("");
-  }, []);
+  }, [setFilter]);
 
   // 🔹 Tự động tìm khi người dùng nhập (debounce 500ms)
   useEffect(() => {
@@ -258,11 +390,17 @@ export default function HomeSearchPage() {
 
     return () => clearTimeout(delayDebounce);
   }, [query]);
-
+  useEffect(() => {
+    console.log(filter);
+    handleSearch("");
+  }, [filter]);
+  const filteredResults = results.filter((file) =>
+    filter === "all" ? true : file.label === filter
+  );
   return (
     <div className="w-full h-[calc(100vh-60px)] pt-12 px-12 mx-auto  flex flex-col items-center gap-6">
       {/* Thanh tìm kiếm */}
-      <div className="flex w-full justify-center gap-8">
+      <div className="flex w-full items-center justify-center gap-4">
         <InputGroup className="w-fit bg-black!">
           <InputGroupInput
             value={query}
@@ -271,14 +409,75 @@ export default function HomeSearchPage() {
             className="w-[500px] "
           />
           <InputGroupAddon>
-            {loading ? <Spinner /> : <Search />}
+            {loading ? <Spinner className="size-4" /> : <Search />}
           </InputGroupAddon>
-          <InputGroupAddon className="w-[100px]" align="inline-end">
-            Results: {loading ? <Spinner /> : results.length}
+          <InputGroupAddon className="w-20 flex  " align="inline-end">
+            <p className="text-xs">Results:</p>
+            {loading ? (
+              <Spinner className="size-3.5" />
+            ) : (
+              <p className="text-xs">{results.length}</p>
+            )}
           </InputGroupAddon>
         </InputGroup>
+        <Button variant={"outline"} className="rounded-sm" size={"icon-sm"}>
+          {" "}
+          <svg
+            data-testid="geist-icon"
+            height={16}
+            strokeLinejoin="round"
+            viewBox="0 0 16 16"
+            width={16}
+            style={{
+              color: "currentcolor",
+            }}
+          >
+            <path
+              fillRule="evenodd"
+              clipRule="evenodd"
+              d="M1 0H1.75H14.25H15V0.75V3V3.31066L14.7803 3.53033L10.5 7.81066V15.25V16H9.75H9H8.7816L8.59734 15.8827L5.84734 14.1327L5.5 13.9117V13.5V7.81066L1.21967 3.53033L1 3.31066V3V0.75V0ZM2.5 1.5V2.68934L6.78033 6.96967L7 7.18934V7.5V13.0883L9 14.361V7.5V7.18934L9.21967 6.96967L13.5 2.68934V1.5H2.5Z"
+              fill="currentColor"
+            />
+          </svg>
+        </Button>
       </div>
-
+      <div className="w-full justify-center  gap-6 flex items-center">
+        <Button
+          variant={"outline"}
+          onClick={() => setFilter("all")}
+          size={"sm"}
+        >
+          <svg
+            data-testid="geist-icon"
+            height={16}
+            strokeLinejoin="round"
+            viewBox="0 0 16 16"
+            width={16}
+            style={{
+              color: "currentcolor",
+            }}
+          >
+            <path
+              fillRule="evenodd"
+              clipRule="evenodd"
+              d="M1.75 2H1V3.5H1.75H14.25H15V2H14.25H1.75ZM1 7H1.75H9.25H10V8.5H9.25H1.75H1V7ZM1 12H1.75H11.25H12V13.5H11.25H1.75H1V12Z"
+              fill="currentColor"
+            />
+          </svg>
+          All
+        </Button>
+        {dataFilter.map((data) => (
+          <Button
+            key={data.id}
+            onClick={() => setFilter(data.value)}
+            variant={"outline"}
+            size={"sm"}
+          >
+            {data.icons}
+            {data.name}
+          </Button>
+        ))}
+      </div>
       <ul>
         {!loading && results.length === 0 && (
           <p className="text-sm text-muted-foreground text-center">
@@ -289,7 +488,7 @@ export default function HomeSearchPage() {
         <ScrollArea className="h-[500px] px-4  ">
           {" "}
           <div className="grid grid-cols-4 place-content-center place-items-center w-full justify-items-center gap-8">
-            {results.map((file, idx) => {
+            {filteredResults.map((file, idx) => {
               const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(file.filename);
 
               // ✅ 2. Lấy phần mở rộng file (luôn đảm bảo là string)
@@ -300,7 +499,7 @@ export default function HomeSearchPage() {
               return (
                 <li
                   key={idx}
-                  className="flex border h-full w-[300px] justify-between border-input flex-col gap-4   rounded-md p-3"
+                  className="flex border border-dashed h-full w-[300px] justify-between border-input flex-col gap-4   rounded-md p-3"
                 >
                   <div className="flex flex-col w-full items-center gap-3">
                     <div className="flex gap-4 items-center w-full">
@@ -312,6 +511,12 @@ export default function HomeSearchPage() {
                         <p className="text-xs text-muted-foreground">
                           User: {file.user_email}
                         </p>
+                        <Badge
+                          variant={"outline"}
+                          className="text-xs  text-[#ffffff]"
+                        >
+                          {file.label}
+                        </Badge>
                       </div>
                     </div>
                   </div>
@@ -346,7 +551,7 @@ export default function HomeSearchPage() {
                         <div>
                           <img
                             className="rounded-lg"
-                            src={results[index].download_url}
+                            src={results[index]?.download_url}
                             alt=""
                           />
                         </div>
@@ -364,7 +569,7 @@ export default function HomeSearchPage() {
                                 : ""
                             }`}
                           >
-                            Prev File
+                            Previous File
                           </Button>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
                           <Button
