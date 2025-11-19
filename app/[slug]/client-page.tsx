@@ -1,22 +1,19 @@
 "use client";
 
-import { notFound } from "next/navigation";
 import { useSession } from "../lib/auth-client";
 import UploadToServer from "./upload-ui";
 
-
 export default function ClientPage({ slug }: { slug: string }) {
-  const { data: session, } = useSession();
+  const { data: session, isPending } = useSession();
 
- 
-  if (!session) return notFound();
+  if (isPending) return <p>Loading...</p>;
 
-  const email = session.user.email.replace("@", "%40");
-  console.log(slug)
+  if (!session) return <p>Access denied</p>;
 
-  // Chỉ cho phép slug trùng email user
-  if (slug !== email) {
-    return notFound();
+  const decodedSlug = decodeURIComponent(slug);
+
+  if (decodedSlug !== session.user.email) {
+    return <p>Access denied</p>;
   }
 
   return <UploadToServer />;

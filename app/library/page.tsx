@@ -312,7 +312,7 @@ const dataFilter = [
   {
     id: 2,
     value: "physics",
-    name: "Physical",
+    name: "Physics",
     icons: (
       <svg
         data-testid="geist-icon"
@@ -360,7 +360,7 @@ const dataFilter = [
   {
     id: 4,
     value: "computer-science",
-    name: "Computer-science",
+    name: "Computer Science",
     icons: (
       <svg
         data-testid="geist-icon"
@@ -562,7 +562,9 @@ export default function HomeSearchPage() {
                       key={data.value}
                       value={data.value}
                       onSelect={(currentValue) => {
-                        setFilter(currentValue === filter ? "" : currentValue);
+                        setFilter(
+                          currentValue === filter ? currentValue : currentValue
+                        );
                         setOpen(false);
                       }}
                     >
