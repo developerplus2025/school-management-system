@@ -1,11 +1,11 @@
 "use client";
 
-import { JSX, useEffect, useState } from "react";
+import React, { JSX, useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
+import { AnimatePresence, motion } from "motion/react";
 import {
   InputGroup,
   InputGroupAddon,
@@ -14,8 +14,8 @@ import {
   InputGroupText,
   InputGroupTextarea,
 } from "@/components/ui/input-group";
-import { icons, ListStart, Search } from "lucide-react";
-import { Spinner } from "@/components/ui/spinner";
+import { Check, ChevronsUpDown, icons, ListStart, Search } from "lucide-react";
+
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -30,6 +30,22 @@ import {
 } from "@/components/ui/alert-dialog";
 import { FileIcon } from "react-file-icon";
 import { Badge } from "@/components/ui/badge";
+import { Loader } from "@/components/ui/loader";
+import { Spinner } from "@/components/ui/spinner";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 type FileItem = { filename: string; download_url: string; user_id?: string };
 
 const data: Record<string, { icon: JSX.Element }> = {
@@ -171,6 +187,57 @@ const data: Record<string, { icon: JSX.Element }> = {
       </svg>
     ),
   },
+  pdf: {
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width={40}
+        height={40}
+        fill="none"
+      >
+        <mask
+          id="pdf_svg__b"
+          width={32}
+          height={40}
+          x={4}
+          y={0}
+          maskUnits="userSpaceOnUse"
+          style={{
+            maskType: "alpha",
+          }}
+        >
+          <path
+            fill="url(#pdf_svg__a)"
+            d="M4 4a4 4 0 0 1 4-4h16l12 12v24a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"
+          />
+        </mask>
+        <g mask="url(#pdf_svg__b)">
+          <path
+            fill="#F5F5F5"
+            d="M4 4a4 4 0 0 1 4-4h16l12 12v24a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"
+          />
+        </g>
+        <path fill="#E9EAEB" d="m24 0 12 12h-8a4 4 0 0 1-4-4z" />
+        <path
+          fill="#414651"
+          d="M11.75 32v-6.546h2.582q.744 0 1.268.285.524.281.8.783.277.498.277 1.15 0 .653-.28 1.151a1.94 1.94 0 0 1-.816.777q-.53.278-1.285.278H12.65v-1.11h1.423q.399 0 .658-.137a.9.9 0 0 0 .39-.386q.13-.25.13-.572 0-.326-.13-.57a.88.88 0 0 0-.39-.38q-.262-.137-.665-.137h-.933V32zm8.147 0h-2.32v-6.546h2.339q.987 0 1.7.394.712.39 1.096 1.122.387.731.387 1.75 0 1.024-.387 1.759-.384.735-1.102 1.128-.717.393-1.713.393m-.937-1.186h.879q.614 0 1.032-.217.422-.22.633-.68.214-.464.214-1.196 0-.726-.214-1.186a1.4 1.4 0 0 0-.63-.677q-.418-.218-1.032-.218h-.882zM24.124 32v-6.546h4.334v1.142h-2.95v1.56h2.662v1.14h-2.662V32z"
+        />
+        <defs>
+          <linearGradient
+            id="pdf_svg__a"
+            x1={20}
+            x2={20}
+            y1={0}
+            y2={40}
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop stopOpacity={0.4} />
+            <stop offset={1} />
+          </linearGradient>
+        </defs>
+      </svg>
+    ),
+  },
   unknown: {
     icon: (
       <svg
@@ -194,6 +261,30 @@ const data: Record<string, { icon: JSX.Element }> = {
   },
 };
 const dataFilter = [
+  {
+    id: 7,
+    value: "all",
+    name: "All",
+    icons: (
+      <svg
+        data-testid="geist-icon"
+        height={16}
+        strokeLinejoin="round"
+        viewBox="0 0 16 16"
+        width={16}
+        style={{
+          color: "currentcolor",
+        }}
+      >
+        <path
+          fillRule="evenodd"
+          clipRule="evenodd"
+          d="M1.75 2H1V3.5H1.75H14.25H15V2H14.25H1.75ZM1 7H1.75H9.25H10V8.5H9.25H1.75H1V7ZM1 12H1.75H11.25H12V13.5H11.25H1.75H1V12Z"
+          fill="currentColor"
+        />
+      </svg>
+    ),
+  },
   {
     id: 1,
     value: "math",
@@ -220,7 +311,7 @@ const dataFilter = [
   },
   {
     id: 2,
-    value: "physical",
+    value: "physics",
     name: "Physical",
     icons: (
       <svg
@@ -319,8 +410,9 @@ const dataFilter = [
 export default function HomeSearchPage() {
   const [query, setQuery] = useState("");
   const [copy, setCopy] = useState(false);
-  const [filter, setFilter] = useState("math");
+  const [filter, setFilter] = useState("all");
   const [downloadUrl, setDownloadUrl] = useState("");
+  const [open, setOpen] = React.useState(false);
   function copyLink() {
     navigator.clipboard.writeText(downloadUrl);
     toast("Link Copied", {
@@ -380,7 +472,7 @@ export default function HomeSearchPage() {
   // 🔹 Gọi API khi trang load lần đầu (lấy toàn bộ file)
   useEffect(() => {
     handleSearch("");
-  }, [setFilter]);
+  }, []);
 
   // 🔹 Tự động tìm khi người dùng nhập (debounce 500ms)
   useEffect(() => {
@@ -392,7 +484,6 @@ export default function HomeSearchPage() {
   }, [query]);
   useEffect(() => {
     console.log(filter);
-    handleSearch("");
   }, [filter]);
   const filteredResults = results.filter((file) =>
     filter === "all" ? true : file.label === filter
@@ -409,63 +500,88 @@ export default function HomeSearchPage() {
             className="w-[500px] "
           />
           <InputGroupAddon>
-            {loading ? <Spinner className="size-4" /> : <Search />}
+            <Search />
           </InputGroupAddon>
           <InputGroupAddon className="w-20 flex  " align="inline-end">
             <p className="text-xs">Results:</p>
             {loading ? (
-              <Spinner className="size-3.5" />
+              <Spinner size="sm" />
             ) : (
-              <p className="text-xs">{results.length}</p>
+              <AnimatePresence>
+                <motion.p
+                  exit={{ backdropFilter: "8px", opacity: 0 }}
+                  className="text-xs w-1"
+                >
+                  {filter == "all"
+                    ? results.length
+                    : results.filter((item) => item.label === filter).length}
+                </motion.p>
+              </AnimatePresence>
             )}
           </InputGroupAddon>
         </InputGroup>
-        <Button variant={"outline"} className="rounded-sm" size={"icon-sm"}>
-          {" "}
-          <svg
-            data-testid="geist-icon"
-            height={16}
-            strokeLinejoin="round"
-            viewBox="0 0 16 16"
-            width={16}
-            style={{
-              color: "currentcolor",
-            }}
-          >
-            <path
-              fillRule="evenodd"
-              clipRule="evenodd"
-              d="M1 0H1.75H14.25H15V0.75V3V3.31066L14.7803 3.53033L10.5 7.81066V15.25V16H9.75H9H8.7816L8.59734 15.8827L5.84734 14.1327L5.5 13.9117V13.5V7.81066L1.21967 3.53033L1 3.31066V3V0.75V0ZM2.5 1.5V2.68934L6.78033 6.96967L7 7.18934V7.5V13.0883L9 14.361V7.5V7.18934L9.21967 6.96967L13.5 2.68934V1.5H2.5Z"
-              fill="currentColor"
-            />
-          </svg>
-        </Button>
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={open}
+              className="w-[180px] "
+            >
+              {filter
+                ? dataFilter.find((framework) => framework.value === filter)
+                    ?.name
+                : "All"}
+              <svg
+                data-testid="geist-icon"
+                height={16}
+                strokeLinejoin="round"
+                viewBox="0 0 16 16"
+                width={16}
+                style={{
+                  color: "currentcolor",
+                }}
+              >
+                <path
+                  fillRule="evenodd"
+                  clipRule="evenodd"
+                  d="M1 0H1.75H14.25H15V0.75V3V3.31066L14.7803 3.53033L10.5 7.81066V15.25V16H9.75H9H8.7816L8.59734 15.8827L5.84734 14.1327L5.5 13.9117V13.5V7.81066L1.21967 3.53033L1 3.31066V3V0.75V0ZM2.5 1.5V2.68934L6.78033 6.96967L7 7.18934V7.5V13.0883L9 14.361V7.5V7.18934L9.21967 6.96967L13.5 2.68934V1.5H2.5Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[200px] p-0">
+            <Command>
+              <CommandInput placeholder="Search framework..." className="h-9" />
+              <CommandList>
+                <CommandEmpty>No subject found.</CommandEmpty>
+                <CommandGroup>
+                  {dataFilter.map((data) => (
+                    <CommandItem
+                      key={data.value}
+                      value={data.value}
+                      onSelect={(currentValue) => {
+                        setFilter(currentValue === filter ? "" : currentValue);
+                        setOpen(false);
+                      }}
+                    >
+                      {data.name}
+                      <Check
+                        className={cn(
+                          "ml-auto",
+                          filter === data.value ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
       </div>
       <div className="w-full justify-center  gap-6 flex items-center">
-        <Button
-          variant={"outline"}
-          onClick={() => setFilter("all")}
-          size={"sm"}
-        >
-          <svg
-            data-testid="geist-icon"
-            height={16}
-            strokeLinejoin="round"
-            viewBox="0 0 16 16"
-            width={16}
-            style={{
-              color: "currentcolor",
-            }}
-          >
-            <path
-              fillRule="evenodd"
-              clipRule="evenodd"
-              d="M1.75 2H1V3.5H1.75H14.25H15V2H14.25H1.75ZM1 7H1.75H9.25H10V8.5H9.25H1.75H1V7ZM1 12H1.75H11.25H12V13.5H11.25H1.75H1V12Z"
-              fill="currentColor"
-            />
-          </svg>
-          All
-        </Button>
         {dataFilter.map((data) => (
           <Button
             key={data.id}
@@ -485,7 +601,7 @@ export default function HomeSearchPage() {
           </p>
         )}
 
-        <ScrollArea className="h-[500px] px-4  ">
+        <ScrollArea className="h-[calc(100vh-270px)] px-4  ">
           {" "}
           <div className="grid grid-cols-4 place-content-center place-items-center w-full justify-items-center gap-8">
             {filteredResults.map((file, idx) => {
@@ -506,8 +622,10 @@ export default function HomeSearchPage() {
                       <div className="">
                         {data[ext]?.icon || data.unknown.icon}
                       </div>
-                      <div className="flex flex-col gap-1">
-                        <p className="font-medium text-xs ">{file.filename}</p>
+                      <div className="flex flex-col gap-2">
+                        <p className="font-medium text-wrap text-xs ">
+                          {file.filename}
+                        </p>
                         <p className="text-xs text-muted-foreground">
                           User: {file.user_email}
                         </p>
