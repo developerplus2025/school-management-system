@@ -60,7 +60,7 @@ export default function Navigation() {
     <div className="w-full fixed  z-20 top-0 bg-black px-12 border-b flex justify-between items-center border-input h-[60px]">
       <div className="flex gap-8 items-center">
         <Link href={"/home"} className="text-md font-semibold">
-          DocsFeature
+          DocsFuture
         </Link>
         <div className="gap-4 items-center flex">
           {data.map((link) => (
