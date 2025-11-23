@@ -18,6 +18,8 @@ export type FileMetadata = {
   id: string;
   title: string;
   label?: string;
+  date: string;
+  fileClass?: string;
 };
 
 export type FileWithPreview = {
@@ -26,6 +28,8 @@ export type FileWithPreview = {
   preview?: string;
   title: string;
   label?: string;
+  date: string;
+  fileClass?: string;
 };
 
 export type FileUploadOptions = {
@@ -62,6 +66,8 @@ export type FileUploadActions = {
 
   /** 👇 Hàm mới thêm vào để set label cho file */
   setFileLabel: (id: string, label: string) => void;
+  setFileDate: (id: string, date: string) => void;
+  setFileClass: (id: string, fileClass: string) => void;
 };
 
 export const useFileUpload = (
@@ -84,6 +90,7 @@ export const useFileUpload = (
       preview: file.url,
       title: file.title,
       label: file.label ?? "",
+      date: file.date,
     })),
     isDragging: false,
     errors: [],
@@ -256,6 +263,7 @@ export const useFileUpload = (
             preview: createPreview(file),
             title: createTitle(file),
             label: "",
+            date: String(Date.now()),
           });
         }
       });
@@ -407,6 +415,32 @@ export const useFileUpload = (
     },
     [onFilesChange]
   );
+  const setFileClass = useCallback(
+    (id: string, fileClass: string) => {
+      setState((prev) => {
+        const updated = prev.files.map((f) =>
+          f.id === id ? { ...f, fileClass } : f
+        );
+        onFilesChange?.(updated);
+        return { ...prev, files: updated };
+      });
+    },
+    [onFilesChange]
+  );
+
+  const setFileDate = useCallback(
+    (id: string, date: string) => {
+      setState((prev) => {
+        const updated = prev.files.map((f) =>
+          f.id === id ? { ...f, date } : f
+        );
+        onFilesChange?.(updated);
+        return { ...prev, files: updated };
+      });
+    },
+    [onFilesChange]
+  );
+
   const getInputProps = useCallback(
     (props: InputHTMLAttributes<HTMLInputElement> = {}) => {
       return {
@@ -437,6 +471,8 @@ export const useFileUpload = (
       openFileDialog,
       getInputProps,
       setFileLabel,
+      setFileDate,
+      setFileClass,
     },
   ];
 };

@@ -105,6 +105,7 @@ export default function UploadToServer() {
       clearFiles,
       getInputProps,
       setFileLabel,
+      setFileClass,
     },
   ] = useFileUpload({ multiple: true, maxSize: 5 * 1024 * 1024, maxFiles: 30 });
 
@@ -141,6 +142,23 @@ export default function UploadToServer() {
       setStatus("Vui lòng chọn file trước khi tải lên.");
       return;
     }
+    const now = new Date();
+
+    const datePart = now.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "2-digit",
+    });
+
+    const timePart = now.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+
+    const final = `${datePart} at ${timePart}`;
+    console.log(final);
 
     const formData = new FormData();
     formData.append("user_email", userEmail);
@@ -151,7 +169,9 @@ export default function UploadToServer() {
         const newName = f.title?.trim() || f.file.name;
         formData.append("titles", newName);
         formData.append("labels", f.label || "none");
-        console.log(f.label);
+        formData.append("date", (f.date = final));
+        formData.append("file_class", f.fileClass || "None");
+        console.log(f.date);
       }
     });
 
@@ -308,13 +328,13 @@ export default function UploadToServer() {
                               className="flex my-4 mx-4 items-center justify-between gap-2 rounded-lg border bg-background p-2 pe-3"
                             >
                               <div className="flex items-center gap-3 overflow-hidden">
-                                <Image
+                                {/* <Image
                                   src={String(file.preview)}
                                   alt={file.file.name}
                                   width={40}
                                   height={40}
                                   className="rounded-md object-cover"
-                                />
+                                /> */}
                                 <div className="flex flex-col gap-0.5 min-w-0">
                                   <p className=" text-[13px] font-medium">
                                     {file.file.name}
@@ -368,7 +388,50 @@ export default function UploadToServer() {
                                   </Command>
                                 </PopoverContent>
                               </Popover>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    className="w-[160px] justify-between"
+                                  >
+                                    {file.fileClass
+                                      ? `Class ${file.fileClass}`
+                                      : "Select class"}
+                                    <ChevronsUpDown className="opacity-50" />
+                                  </Button>
+                                </PopoverTrigger>
 
+                                <PopoverContent className="w-[160px] p-0">
+                                  <Command>
+                                    <CommandInput
+                                      placeholder="Search class..."
+                                      className="h-9"
+                                    />
+                                    <CommandList>
+                                      <CommandEmpty>
+                                        No class found.
+                                      </CommandEmpty>
+                                      <CommandGroup>
+                                        {Array.from(
+                                          { length: 12 },
+                                          (_, i) => i + 1
+                                        ).map((cls) => (
+                                          <CommandItem
+                                            key={cls}
+                                            value={`${cls}`}
+                                            onClick={() => setOpen(false)}
+                                            onSelect={(value) =>
+                                              setFileClass(file.id, value)
+                                            }
+                                          >
+                                            Class {cls}
+                                          </CommandItem>
+                                        ))}
+                                      </CommandGroup>
+                                    </CommandList>
+                                  </Command>
+                                </PopoverContent>
+                              </Popover>
                               <Input
                                 type="text"
                                 placeholder="Nhập tên file..."
@@ -383,7 +446,9 @@ export default function UploadToServer() {
                               <Button
                                 size="icon"
                                 variant="ghost"
-                                onClick={() => removeFile(file.id)}
+                                onClick={() => {
+                                  removeFile(file.id);
+                                }}
                               >
                                 <XIcon />
                               </Button>
@@ -438,13 +503,6 @@ export default function UploadToServer() {
                     className="flex items-center gap-5 justify-between border-input border rounded-md px-3 py-2"
                   >
                     <div className="flex w-full items-center gap-3">
-                      {isImage && (
-                        <img
-                          src={fileUrl}
-                          alt={file.name}
-                          className="w-10 h-10 rounded-md object-cover"
-                        />
-                      )}
                       {editingFile === file.name ? (
                         <Input
                           type="text"

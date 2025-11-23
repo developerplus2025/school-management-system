@@ -1,5 +1,6 @@
 "use client";
 
+import { notFound } from "next/navigation";
 import { useSession } from "../lib/auth-client";
 import UploadToServer from "./upload-ui";
 
@@ -8,12 +9,12 @@ export default function ClientPage({ slug }: { slug: string }) {
 
   if (isPending) return <p>Loading...</p>;
 
-  if (!session) return <p>Access denied</p>;
+  if (!session) return notFound();
 
   const decodedSlug = decodeURIComponent(slug);
 
   if (decodedSlug !== session.user.email) {
-    return <p>Access denied</p>;
+    return notFound();
   }
 
   return <UploadToServer />;

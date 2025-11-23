@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import Navigation from "@/components/navigation";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
@@ -34,7 +35,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <body
-          className={`${geistSans.variable} ${geistMono.variable} h-screen flex flex-col gap-8 items-center  antialiased`}
+          className={`${geistSans.variable} ${geistMono.variable}  h-screen flex flex-col gap-8 items-center  antialiased`}
         >
           <ThemeProvider
             attribute="class"

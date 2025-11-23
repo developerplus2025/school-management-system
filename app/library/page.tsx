@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AnimatePresence, motion } from "motion/react";
+import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
+import "@cyntler/react-doc-viewer/dist/index.css";
 import {
   InputGroup,
   InputGroupAddon,
@@ -46,6 +48,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+// import PdfViewer from "@/components/file-viewer/file-viewer";
+import { Document, Page } from "react-pdf";
 type FileItem = { filename: string; download_url: string; user_id?: string };
 
 const data: Record<string, { icon: JSX.Element }> = {
@@ -260,7 +264,7 @@ const data: Record<string, { icon: JSX.Element }> = {
     ),
   },
 };
-const dataFilter = [
+const subjectFilterData = [
   {
     id: 7,
     value: "all",
@@ -406,11 +410,32 @@ const dataFilter = [
     ),
   },
 ];
+const classFilterData = [
+  {
+    value: "all",
+    name: "All",
+  },
+  { value: "1", name: "Class 1" },
+  { value: "2", name: "Class 2" },
+  { value: "3", name: "Class 3" },
+  { value: "4", name: "Class 4" },
+  { value: "5", name: "Class 5" },
+  { value: "6", name: "Class 6" },
+  { value: "7", name: "Class 7" },
+  { value: "8", name: "Class 8" },
+  { value: "9", name: "Class 9" },
+  { value: "10", name: "Class 10" },
+  { value: "11", name: "Class 11" },
+  { value: "12", name: "Class 12" },
+];
 
 export default function HomeSearchPage() {
   const [query, setQuery] = useState("");
   const [copy, setCopy] = useState(false);
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState({
+    subject: "all",
+    class: "all",
+  });
   const [downloadUrl, setDownloadUrl] = useState("");
   const [open, setOpen] = React.useState(false);
   function copyLink() {
@@ -440,6 +465,8 @@ export default function HomeSearchPage() {
       download_url: string;
       title: string;
       label: string;
+      date: string;
+      file_class: string;
     }[]
   >([]);
   const [loading, setLoading] = useState(false);
@@ -485,9 +512,21 @@ export default function HomeSearchPage() {
   useEffect(() => {
     console.log(filter);
   }, [filter]);
-  const filteredResults = results.filter((file) =>
-    filter === "all" ? true : file.label === filter
-  );
+  const filteredResults = results.filter((file) => {
+    // Lọc theo subject
+    if (filter.subject !== "all" && file.label !== filter.subject) {
+      return false;
+    }
+
+    // Lọc theo class (dùng file_class)
+    if (filter.class !== "all" && file.file_class !== filter.class) {
+      return false;
+    }
+
+    return true;
+  });
+  const [docs, setDocs] = useState<{ uri: string }[]>([]);
+
   return (
     <div className="w-full h-[calc(100vh-60px)] pt-12 px-12 mx-auto  flex flex-col items-center gap-6">
       {/* Thanh tìm kiếm */}
@@ -512,9 +551,10 @@ export default function HomeSearchPage() {
                   exit={{ backdropFilter: "8px", opacity: 0 }}
                   className="text-xs w-1"
                 >
-                  {filter == "all"
+                  {filter.subject === "all"
                     ? results.length
-                    : results.filter((item) => item.label === filter).length}
+                    : results.filter((item) => item.label === filter.subject)
+                        .length}
                 </motion.p>
               </AnimatePresence>
             )}
@@ -526,12 +566,12 @@ export default function HomeSearchPage() {
               variant="outline"
               role="combobox"
               aria-expanded={open}
-              className="w-[180px] "
+              className=" "
             >
-              {filter
-                ? dataFilter.find((framework) => framework.value === filter)
+              {/* {filter
+                ? subjectFilterData.find((framework) => framework.value === filter)
                     ?.name
-                : "All"}
+                : "All"} */}
               <svg
                 data-testid="geist-icon"
                 height={16}
@@ -552,42 +592,82 @@ export default function HomeSearchPage() {
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-[200px] p-0">
-            <Command>
-              <CommandInput placeholder="Search framework..." className="h-9" />
-              <CommandList>
-                <CommandEmpty>No subject found.</CommandEmpty>
-                <CommandGroup>
-                  {dataFilter.map((data) => (
-                    <CommandItem
-                      key={data.value}
-                      value={data.value}
-                      onSelect={(currentValue) => {
-                        setFilter(
-                          currentValue === filter ? currentValue : currentValue
-                        );
-                        setOpen(false);
-                      }}
-                    >
-                      {data.name}
-                      <Check
-                        className={cn(
-                          "ml-auto",
-                          filter === data.value ? "opacity-100" : "opacity-0"
-                        )}
-                      />
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
+            <Command className="bg-black">
+              <CommandInput placeholder="Search filter..." className="h-9 " />
+              <ScrollArea>
+                <CommandList className="bg-black">
+                  <CommandEmpty>No subject found.</CommandEmpty>
+
+                  {/* Subject filter */}
+                  <CommandGroup heading="Subject">
+                    {subjectFilterData.map((data) => (
+                      <CommandItem
+                        key={data.value}
+                        value={data.value}
+                        onSelect={(currentValue) => {
+                          setFilter((prev) => ({
+                            ...prev,
+                            subject: currentValue,
+                          }));
+                          setOpen(false);
+                        }}
+                      >
+                        {data.name}
+                        <Check
+                          className={cn(
+                            "ml-auto",
+                            filter.subject === data.value
+                              ? "opacity-100"
+                              : "opacity-0"
+                          )}
+                        />
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+
+                  {/* Class filter */}
+                  <CommandGroup heading="Class">
+                    {classFilterData.map((data) => (
+                      <CommandItem
+                        key={data.value}
+                        value={data.value}
+                        onSelect={(currentValue) => {
+                          setFilter((prev) => ({
+                            ...prev,
+                            class: currentValue,
+                          }));
+                          setOpen(false);
+                        }}
+                      >
+                        {data.name}
+                        <Check
+                          className={cn(
+                            "ml-auto",
+                            filter.class === data.value
+                              ? "opacity-100"
+                              : "opacity-0"
+                          )}
+                        />
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </ScrollArea>
             </Command>
           </PopoverContent>
         </Popover>
       </div>
       <div className="w-full justify-center  gap-6 flex items-center">
-        {dataFilter.map((data) => (
+        {subjectFilterData.map((data) => (
           <Button
             key={data.id}
-            onClick={() => setFilter(data.value)}
+            onClick={() => {
+              setFilter((prev) => ({
+                ...prev,
+                subject: data.value, // chỉ cập nhật subject
+              }));
+              console.log(results);
+            }}
             variant={"outline"}
             size={"sm"}
           >
@@ -605,7 +685,7 @@ export default function HomeSearchPage() {
 
         <ScrollArea className="h-[calc(100vh-270px)] px-4  ">
           {" "}
-          <div className="grid grid-cols-4 place-content-center place-items-center w-full justify-items-center gap-8">
+          <div className="grid grid-cols-4 place-content-center justify-between place-items-center w-full justify-items-center gap-8">
             {filteredResults.map((file, idx) => {
               const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(file.filename);
 
@@ -617,25 +697,32 @@ export default function HomeSearchPage() {
               return (
                 <li
                   key={idx}
-                  className="flex border border-dashed h-full w-[300px] justify-between border-input flex-col gap-4   rounded-md p-3"
+                  className="flex border border-dashed  h-full w-[320px] justify-between border-input flex-col gap-4   rounded-md p-3"
                 >
                   <div className="flex flex-col w-full items-center gap-3">
                     <div className="flex gap-4 items-center w-full">
                       <div className="">
                         {data[ext]?.icon || data.unknown.icon}
                       </div>
-                      <div className="flex flex-col gap-2">
-                        <p className="font-medium text-wrap text-xs ">
+                      <div className="flex w-full flex-col gap-2">
+                        <p className="font-medium font-[BeVietnamPro-Medium] break-all w-full wrap-break-word text-wrap text-xs ">
                           {file.filename}
                         </p>
+                        <p className="font-medium break-all w-full wrap-break-word text-wrap text-xs ">
+                          Class: {file.file_class}
+                        </p>
                         <p className="text-xs text-muted-foreground">
-                          User: {file.user_email}
+                          User:{" "}
+                          {file.user_email.replace("-gmailcom", "@gmail.com")}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {file.date}
                         </p>
                         <Badge
                           variant={"outline"}
-                          className="text-xs  text-[#ffffff]"
+                          className="text-xs px-0 border-none  text-blue-500"
                         >
-                          {file.label}
+                          # {file.label}
                         </Badge>
                       </div>
                     </div>
@@ -657,6 +744,11 @@ export default function HomeSearchPage() {
                           onClick={() => {
                             setIndex(idx);
                             console.log(index);
+                            setDocs([
+                              {
+                                uri: `./uploads/${results[idx]?.user_email}/${results[idx]?.filename}`,
+                              },
+                            ]);
                           }}
                           size="sm"
                           variant="outline"
@@ -664,17 +756,31 @@ export default function HomeSearchPage() {
                           View More
                         </Button>
                       </AlertDialogTrigger>
-                      <AlertDialogContent>
+                      <AlertDialogContent className="max-w-[1480px]! overflow-auto h-screen">
                         <AlertDialogHeader>
-                          <AlertDialogTitle>File Preview</AlertDialogTitle>
+                          <AlertDialogTitle className="hidden"></AlertDialogTitle>
                         </AlertDialogHeader>
-                        <div>
+                        <div className="h-full">
                           <img
                             className="rounded-lg"
                             src={results[index]?.download_url}
                             alt=""
                           />
+                          {/* <DocViewer documents={docs} /> */}
+
+                          <DocViewer
+                            className="h-[560px]"
+                            documents={docs}
+                            initialActiveDocument={docs[1]}
+                            pluginRenderers={DocViewerRenderers}
+                          />
+
+                          {/* <iframe
+                            className="w-full rounded-lg h-[560px]"
+                            src={`./uploads/${file.user_email}/${file.filename}`}
+                          ></iframe> */}
                         </div>
+
                         <AlertDialogFooter className="flex w-full xl:justify-between">
                           <Button
                             onClick={() => {
