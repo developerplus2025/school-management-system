@@ -5,9 +5,9 @@ import { useSession } from "../lib/auth-client";
 import UploadToServer from "./upload-ui";
 
 export default function ClientPage({ slug }: { slug: string }) {
-  const { data: session, isPending } = useSession();
+  const { data: session } = useSession();
 
-  if (isPending) return <p>Loading...</p>;
+  
 
   if (!session) return notFound();
 

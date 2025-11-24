@@ -433,9 +433,10 @@ export default function HomeSearchPage() {
   const [query, setQuery] = useState("");
   const [copy, setCopy] = useState(false);
   const [filter, setFilter] = useState({
-    subject: "all",
-    class: "all",
+    subject: [] as string[],
+    class: [] as string[],
   });
+
   const [downloadUrl, setDownloadUrl] = useState("");
   const [open, setOpen] = React.useState(false);
   function copyLink() {
@@ -492,7 +493,7 @@ export default function HomeSearchPage() {
       setIndex(results.length);
       setTimeout(() => {
         setLoading(false);
-      }, 200);
+      }, 500);
     }
   };
 
@@ -512,19 +513,46 @@ export default function HomeSearchPage() {
   useEffect(() => {
     console.log(filter);
   }, [filter]);
+  const toggleFilter = (type: "subject" | "class", value: string) => {
+    setFilter((prev) => {
+      const exists = prev[type].includes(value);
+      return {
+        ...prev,
+        [type]: exists
+          ? prev[type].filter((item) => item !== value) // bỏ chọn
+          : [...prev[type], value], // chọn thêm
+      };
+    });
+  };
+  const toggleSubject = (value: string) => {
+    setFilter((prev) => {
+      // Nếu đang ALL (mảng rỗng) → tắt ALL và chọn subject mới
+      if (prev.subject.length === 0) {
+        return { ...prev, subject: [value] };
+      }
+
+      // Nếu subject đã được chọn → bỏ chọn
+      if (prev.subject.includes(value)) {
+        const newList = prev.subject.filter((s) => s !== value);
+
+        // Nếu bỏ chọn hết → chuyển về ALL
+        return { ...prev, subject: newList.length === 0 ? [] : newList };
+      }
+
+      // Nếu chưa có → thêm vào
+      return { ...prev, subject: [...prev.subject, value] };
+    });
+  };
   const filteredResults = results.filter((file) => {
-    // Lọc theo subject
-    if (filter.subject !== "all" && file.label !== filter.subject) {
-      return false;
-    }
+    const matchSubject =
+      filter.subject.length === 0 || filter.subject.includes(file.label);
 
-    // Lọc theo class (dùng file_class)
-    if (filter.class !== "all" && file.file_class !== filter.class) {
-      return false;
-    }
+    const matchClass =
+      filter.class.length === 0 || filter.class.includes(file.file_class);
 
-    return true;
+    return matchSubject && matchClass;
   });
+
   const [docs, setDocs] = useState<{ uri: string }[]>([]);
 
   return (
@@ -551,10 +579,11 @@ export default function HomeSearchPage() {
                   exit={{ backdropFilter: "8px", opacity: 0 }}
                   className="text-xs w-1"
                 >
-                  {filter.subject === "all"
+                  {filter.subject.length === 0
                     ? results.length
-                    : results.filter((item) => item.label === filter.subject)
-                        .length}
+                    : results.filter((item) =>
+                        filter.subject.includes(item.label)
+                      ).length}
                 </motion.p>
               </AnimatePresence>
             )}
@@ -597,7 +626,6 @@ export default function HomeSearchPage() {
               <ScrollArea>
                 <CommandList className="bg-black">
                   <CommandEmpty>No subject found.</CommandEmpty>
-
                   {/* Subject filter */}
                   <CommandGroup heading="Subject">
                     {subjectFilterData.map((data) => (
@@ -605,52 +633,45 @@ export default function HomeSearchPage() {
                         key={data.value}
                         value={data.value}
                         onSelect={(currentValue) => {
-                          setFilter((prev) => ({
-                            ...prev,
-                            subject: currentValue,
-                          }));
-                          setOpen(false);
+                          toggleFilter("subject", currentValue);
                         }}
                       >
                         {data.name}
                         <Check
                           className={cn(
                             "ml-auto",
-                            filter.subject === data.value
+                            filter.subject.includes(data.value)
                               ? "opacity-100"
                               : "opacity-0"
                           )}
                         />
                       </CommandItem>
                     ))}
-                  </CommandGroup>
-
-                  {/* Class filter */}
+                  </CommandGroup>;
+                  {
+                    /* Class filter */
+                  }
                   <CommandGroup heading="Class">
                     {classFilterData.map((data) => (
                       <CommandItem
                         key={data.value}
                         value={data.value}
                         onSelect={(currentValue) => {
-                          setFilter((prev) => ({
-                            ...prev,
-                            class: currentValue,
-                          }));
-                          setOpen(false);
+                          toggleFilter("class", currentValue);
                         }}
                       >
                         {data.name}
                         <Check
                           className={cn(
                             "ml-auto",
-                            filter.class === data.value
+                            filter.class.includes(data.value)
                               ? "opacity-100"
                               : "opacity-0"
                           )}
                         />
                       </CommandItem>
                     ))}
-                  </CommandGroup>
+                  </CommandGroup>;
                 </CommandList>
               </ScrollArea>
             </Command>
@@ -658,26 +679,57 @@ export default function HomeSearchPage() {
         </Popover>
       </div>
       <div className="w-full justify-center  gap-6 flex items-center">
-        {subjectFilterData.map((data) => (
-          <Button
-            key={data.id}
-            onClick={() => {
-              setFilter((prev) => ({
-                ...prev,
-                subject: data.value, // chỉ cập nhật subject
-              }));
-              console.log(results);
-            }}
-            variant={"outline"}
-            size={"sm"}
-          >
-            {data.icons}
-            {data.name}
-          </Button>
-        ))}
+        <Button
+          onClick={() =>
+            setFilter((prev) => ({
+              ...prev,
+              subject:
+                prev.subject.length === 0
+                  ? subjectFilterData.map((data) => data.value) // đang là ALL → tắt ALL
+                  : [], // đang filter → bật ALL
+            }))
+          }
+          variant="outline"
+          size="sm"
+          className={cn(
+            filter.subject.length === 0 ? "text-white" : "text-[#a1a1a1]"
+          )}
+        >
+          All
+        </Button>
+
+        {subjectFilterData
+          .filter((d) => d.value !== "all") // giả sử dataFilter có mục all
+          .map((data) => {
+            const isSelected = filter.subject.includes(data.value);
+
+            return (
+              <Button
+                key={data.id}
+                // disable khi đang ALL
+                disabled={filter.subject.length === 0}
+                className={cn(
+                  isSelected ? "text-white" : "text-[#a1a1a1]",
+                  filter.subject.length === 0
+                    ? "opacity-40 cursor-not-allowed"
+                    : ""
+                )}
+                onClick={() => {
+                  // guard: không cho toggle nếu đang ALL
+                  if (filter.subject.length === 0) return;
+                  toggleSubject(data.value);
+                }}
+                variant={"outline"}
+                size={"sm"}
+              >
+                {data.icons}
+                {data.name}
+              </Button>
+            );
+          })}
       </div>
       <ul>
-        {!loading && results.length === 0 && (
+        {loading && results.length === 0 && (
           <p className="text-sm text-muted-foreground text-center">
             No results found.
           </p>
@@ -685,7 +737,7 @@ export default function HomeSearchPage() {
 
         <ScrollArea className="h-[calc(100vh-270px)] px-4  ">
           {" "}
-          <div className="grid grid-cols-4 place-content-center justify-between place-items-center w-full justify-items-center gap-8">
+          <div className="grid grid-cols-4 place-content-between justify-between place-items-center w-full justify-items-center gap-8">
             {filteredResults.map((file, idx) => {
               const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(file.filename);
 
@@ -699,15 +751,20 @@ export default function HomeSearchPage() {
                   key={idx}
                   className="flex border border-dashed  h-full w-[320px] justify-between border-input flex-col gap-4   rounded-md p-3"
                 >
-                  <div className="flex flex-col w-full items-center gap-3">
+                  <div className="flex flex-col h-full justify-between w-full items-center gap-3">
                     <div className="flex gap-4 items-center w-full">
                       <div className="">
                         {data[ext]?.icon || data.unknown.icon}
                       </div>
-                      <div className="flex w-full flex-col gap-2">
-                        <p className="font-medium font-[BeVietnamPro-Medium] break-all w-full wrap-break-word text-wrap text-xs ">
-                          {file.filename}
-                        </p>
+                      <div className="flex w-full h-full justify-between flex-col gap-2">
+                        {!file.filename && (
+                          <Skeleton className="w-[200p] h-5" />
+                        )}
+                        {file.filename && (
+                          <p className="font-medium font-[BeVietnamPro-Medium] break-all w-full wrap-break-word text-wrap text-xs ">
+                            {file.filename}
+                          </p>
+                        )}
                         <p className="font-medium break-all w-full wrap-break-word text-wrap text-xs ">
                           Class: {file.file_class}
                         </p>
