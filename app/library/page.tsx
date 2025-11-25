@@ -1,6 +1,6 @@
 "use client";
 
-import React, { JSX, useEffect, useState } from "react";
+import React, { JSX, useEffect, useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -659,15 +659,17 @@ export default function HomeSearchPage() {
     }));
   }
 
-  const filteredResults = results.filter((file) => {
-    const matchSubject =
-      filter.subject.length === 0 || filter.subject.includes(file.label);
+  const filteredResults = useMemo(() => {
+    return results.filter((file) => {
+      const matchSubject =
+        filter.subject.length === 0 || filter.subject.includes(file.label);
 
-    const matchClass =
-      filter.class.length === 0 || filter.class.includes(file.file_class);
+      const matchClass =
+        filter.class.length === 0 || filter.class.includes(file.file_class);
 
-    return matchSubject && matchClass;
-  });
+      return matchSubject && matchClass;
+    });
+  }, [results, filter]);
 
   const [docs, setDocs] = useState<{ uri: string }[]>([]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
