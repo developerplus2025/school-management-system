@@ -48,28 +48,39 @@ import {
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { auth } from "@/lib/auth";
-const frameworks = [
-  {
-    value: "next.js",
-    label: "Next.js",
-  },
-  {
-    value: "sveltekit",
-    label: "SvelteKit",
-  },
-  {
-    value: "nuxt.js",
-    label: "Nuxt.js",
-  },
-  {
-    value: "remix",
-    label: "Remix",
-  },
-  {
-    value: "astro",
-    label: "Astro",
-  },
-];
+import {
+  ColumnDef,
+  ColumnFiltersState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  SortingState,
+  useReactTable,
+  VisibilityState,
+} from "@tanstack/react-table";
+import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react";
+
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 const labels = [
   { value: "math", label: "Math" },
   { value: "physics", label: "Physics" },
@@ -77,7 +88,73 @@ const labels = [
   { value: "english", label: "English" },
   { value: "history", label: "History" },
 ];
+export type TypeData = {
+  name: string;
+  title?: string;
+  lable: string;
+  date: string;
+  file_class: number;
+};
+export const columns: ColumnDef<TypeData>[] = [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && "indeterminate")
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: "date",
+    header: "Date",
+    cell: ({ row }) => <div className="capitalize">{row.getValue("date")}</div>,
+  },
 
+  {
+    accessorKey: "name",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          File Name
+          <ArrowUpDown />
+        </Button>
+      );
+    },
+
+    cell: ({ row }) => <div className="capitalize">{row.getValue("name")}</div>,
+  },
+  {
+    accessorKey: "file_class",
+    header: "File Class",
+    cell: ({ row }) => (
+      <div className="capitalize">{row.getValue("file_class")}</div>
+    ),
+  },
+  {
+    accessorKey: "label",
+    header: "Subject",
+    cell: ({ row }) => (
+      <div className="capitalize">{row.getValue("label")}</div>
+    ),
+  },
+];
 export default function UploadToServer() {
   const { data: session } = useSession();
   const token = session?.session?.token;
@@ -87,7 +164,13 @@ export default function UploadToServer() {
   const [uploading, setUploading] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [serverFiles, setServerFiles] = useState<
-    { name: string; title?: string; lable: string }[]
+    {
+      name: string;
+      title?: string;
+      lable: string;
+      date: string;
+      file_class: number;
+    }[]
   >([]);
   const [open, setOpen] = React.useState(false);
   const [value, setValue] = React.useState("");
@@ -270,9 +353,34 @@ export default function UploadToServer() {
       toast.error("Không thể kết nối đến server!");
     }
   };
-
+  const [docs, setDocs] = useState<{ uri: string }[]>([]);
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    []
+  );
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = React.useState({});
+  const table = useReactTable<TypeData>({
+    data: serverFiles,
+    columns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+    },
+  });
   return (
-    <div className="flex mt-[90px] flex-col w-[800px] gap-6">
+    <div className="flex mt-[40px] flex-col w-full px-[3rem]  gap-6">
       {!login ? (
         <div className="mt-[5rem]">
           <Alert variant="destructive">
@@ -287,7 +395,7 @@ export default function UploadToServer() {
         <>
           <div
             onDrop={handleDrop}
-            className="relative flex min-h-52 flex-col items-center justify-center overflow-hidden rounded-xl border border-dashed border-input p-4 transition-colors"
+            className="relative hidden min-h-52 flex-col items-center justify-center overflow-hidden rounded-xl border border-dashed border-input p-4 transition-colors"
           >
             <input multiple {...getInputProps()} className="sr-only" />
             <div className="text-center">
@@ -298,196 +406,314 @@ export default function UploadToServer() {
               <p className="text-xs text-muted-foreground">
                 (Max 5MB per file, max 30 files)
               </p>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="outline" className="mt-4">
-                    Upload
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent className="max-w-[900px]! ">
-                  <AlertDialogHeader>
-                    <AlertDialogCancel className="self-end border-none! dark:bg-none!">
-                      <XIcon></XIcon>
-                    </AlertDialogCancel>
-                    <AlertDialogTitle className="flex w-full pb-4 justify-center">
-                      <Button
-                        variant={"outline"}
-                        size={"sm"}
-                        onClick={openFileDialog}
-                      >
-                        Select file
-                      </Button>
-                    </AlertDialogTitle>
+            </div>
+          </div>
+          <div className="w-full">
+            <div className="flex justify-between items-center py-4">
+              <Input
+                placeholder="Filter file name..."
+                value={
+                  (table.getColumn("name")?.getFilterValue() as string) ?? ""
+                }
+                onChange={(event) =>
+                  table.getColumn("name")?.setFilterValue(event.target.value)
+                }
+                className="max-w-sm"
+              />
 
-                    {files.length > 0 && (
-                      <div className="space-y-2">
-                        <ScrollArea className="h-[400px] flex flex-col gap-4 space-y-2">
-                          {files.map((file) => (
-                            <div
-                              key={file.id}
-                              className="flex my-4 mx-4 items-center justify-between gap-2 rounded-lg border bg-background p-2 pe-3"
-                            >
-                              <div className="flex items-center gap-3 overflow-hidden">
-                                {/* <Image
+              <div className="flex gap-4 items-center">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" className="">
+                      Upload
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="max-w-[900px]! ">
+                    <AlertDialogHeader>
+                      <AlertDialogCancel className="self-end border-none! dark:bg-none!">
+                        <XIcon></XIcon>
+                      </AlertDialogCancel>
+                      <AlertDialogTitle className="flex w-full pb-4 justify-center">
+                        <Button
+                          variant={"outline"}
+                          size={"sm"}
+                          onClick={openFileDialog}
+                        >
+                          Select file
+                        </Button>
+                      </AlertDialogTitle>
+
+                      {files.length > 0 && (
+                        <div className="space-y-2">
+                          <ScrollArea className="h-[400px] flex flex-col gap-4 space-y-2">
+                            {files.map((file) => (
+                              <div
+                                key={file.id}
+                                className="flex my-4 mx-4 items-center justify-between gap-2 rounded-lg border bg-background p-2 pe-3"
+                              >
+                                <div className="flex items-center gap-3 overflow-hidden">
+                                  {/* <Image
                                   src={String(file.preview)}
                                   alt={file.file.name}
                                   width={40}
                                   height={40}
                                   className="rounded-md object-cover"
                                 /> */}
-                                <div className="flex flex-col gap-0.5 min-w-0">
-                                  <p className=" text-[13px] font-medium">
-                                    {file.file.name}
-                                  </p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {formatBytes(file.file.size)}
-                                  </p>
+                                  <div className="flex flex-col gap-0.5 min-w-0">
+                                    <p className=" text-[13px] font-medium">
+                                      {file.file.name}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {formatBytes(file.file.size)}
+                                    </p>
+                                  </div>
                                 </div>
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      className="w-[160px] justify-between"
+                                    >
+                                      {file.label
+                                        ? labels.find(
+                                            (l) => l.value === file.label
+                                          )?.label
+                                        : "Select label"}
+                                      <ChevronsUpDown className="opacity-50" />
+                                    </Button>
+                                  </PopoverTrigger>
+
+                                  <PopoverContent className="w-[160px] p-0">
+                                    <Command>
+                                      <CommandInput
+                                        placeholder="Search label..."
+                                        className="h-9"
+                                      />
+                                      <CommandList>
+                                        <CommandEmpty>
+                                          No label found.
+                                        </CommandEmpty>
+                                        <CommandGroup>
+                                          {labels.map((lb) => (
+                                            <CommandItem
+                                              defaultValue={"Math"}
+                                              key={lb.value}
+                                              value={lb.value}
+                                              onClick={() => setOpen(false)}
+                                              onSelect={(value) => {
+                                                setFileLabel(file.id, value);
+                                              }}
+                                            >
+                                              {lb.label}
+                                            </CommandItem>
+                                          ))}
+                                        </CommandGroup>
+                                      </CommandList>
+                                    </Command>
+                                  </PopoverContent>
+                                </Popover>
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      className="w-[160px] justify-between"
+                                    >
+                                      {file.fileClass
+                                        ? `Class ${file.fileClass}`
+                                        : "Select class"}
+                                      <ChevronsUpDown className="opacity-50" />
+                                    </Button>
+                                  </PopoverTrigger>
+
+                                  <PopoverContent className="w-[160px] p-0">
+                                    <Command>
+                                      <CommandInput
+                                        placeholder="Search class..."
+                                        className="h-9"
+                                      />
+                                      <CommandList>
+                                        <CommandEmpty>
+                                          No class found.
+                                        </CommandEmpty>
+                                        <CommandGroup>
+                                          {Array.from(
+                                            { length: 12 },
+                                            (_, i) => i + 1
+                                          ).map((cls) => (
+                                            <CommandItem
+                                              key={cls}
+                                              value={`${cls}`}
+                                              onClick={() => setOpen(false)}
+                                              onSelect={(value) =>
+                                                setFileClass(file.id, value)
+                                              }
+                                            >
+                                              Class {cls}
+                                            </CommandItem>
+                                          ))}
+                                        </CommandGroup>
+                                      </CommandList>
+                                    </Command>
+                                  </PopoverContent>
+                                </Popover>
+                                <Input
+                                  type="text"
+                                  placeholder="Nhập tên file..."
+                                  defaultValue={file.file.name.replace(
+                                    /\.[^/.]+$/,
+                                    ""
+                                  )}
+                                  className="border rounded px-2 py-1 text-sm w-fit"
+                                  onChange={(e) =>
+                                    (file.title = e.target.value)
+                                  }
+                                />
+
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    removeFile(file.id);
+                                  }}
+                                >
+                                  <XIcon />
+                                </Button>
                               </div>
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    className="w-[160px] justify-between"
-                                  >
-                                    {file.label
-                                      ? labels.find(
-                                          (l) => l.value === file.label
-                                        )?.label
-                                      : "Select label"}
-                                    <ChevronsUpDown className="opacity-50" />
-                                  </Button>
-                                </PopoverTrigger>
+                            ))}
+                          </ScrollArea>
 
-                                <PopoverContent className="w-[160px] p-0">
-                                  <Command>
-                                    <CommandInput
-                                      placeholder="Search label..."
-                                      className="h-9"
-                                    />
-                                    <CommandList>
-                                      <CommandEmpty>
-                                        No label found.
-                                      </CommandEmpty>
-                                      <CommandGroup>
-                                        {labels.map((lb) => (
-                                          <CommandItem
-                                            defaultValue={"Math"}
-                                            key={lb.value}
-                                            value={lb.value}
-                                            onClick={() => setOpen(false)}
-                                            onSelect={(value) => {
-                                              setFileLabel(file.id, value);
-                                            }}
-                                          >
-                                            {lb.label}
-                                          </CommandItem>
-                                        ))}
-                                      </CommandGroup>
-                                    </CommandList>
-                                  </Command>
-                                </PopoverContent>
-                              </Popover>
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    className="w-[160px] justify-between"
-                                  >
-                                    {file.fileClass
-                                      ? `Class ${file.fileClass}`
-                                      : "Select class"}
-                                    <ChevronsUpDown className="opacity-50" />
-                                  </Button>
-                                </PopoverTrigger>
-
-                                <PopoverContent className="w-[160px] p-0">
-                                  <Command>
-                                    <CommandInput
-                                      placeholder="Search class..."
-                                      className="h-9"
-                                    />
-                                    <CommandList>
-                                      <CommandEmpty>
-                                        No class found.
-                                      </CommandEmpty>
-                                      <CommandGroup>
-                                        {Array.from(
-                                          { length: 12 },
-                                          (_, i) => i + 1
-                                        ).map((cls) => (
-                                          <CommandItem
-                                            key={cls}
-                                            value={`${cls}`}
-                                            onClick={() => setOpen(false)}
-                                            onSelect={(value) =>
-                                              setFileClass(file.id, value)
-                                            }
-                                          >
-                                            Class {cls}
-                                          </CommandItem>
-                                        ))}
-                                      </CommandGroup>
-                                    </CommandList>
-                                  </Command>
-                                </PopoverContent>
-                              </Popover>
-                              <Input
-                                type="text"
-                                placeholder="Nhập tên file..."
-                                defaultValue={file.file.name.replace(
-                                  /\.[^/.]+$/,
-                                  ""
-                                )}
-                                className="border rounded px-2 py-1 text-sm w-fit"
-                                onChange={(e) => (file.title = e.target.value)}
-                              />
-
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => {
-                                  removeFile(file.id);
-                                }}
-                              >
-                                <XIcon />
-                              </Button>
+                          <div className="flex items-center pt-4 justify-between">
+                            <div className="flex gap-4 items-center">
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              </AlertDialogFooter>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel
+                                  onClick={handleUploadToServer}
+                                  disabled={uploading}
+                                >
+                                  {uploading ? "Đang tải lên..." : "Upload"}
+                                </AlertDialogCancel>
+                              </AlertDialogFooter>
                             </div>
-                          ))}
-                        </ScrollArea>
 
-                        <div className="flex items-center pt-4 justify-between">
-                          <div className="flex gap-4 items-center">
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            </AlertDialogFooter>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel
-                                onClick={handleUploadToServer}
-                                disabled={uploading}
-                              >
-                                {uploading ? "Đang tải lên..." : "Upload"}
-                              </AlertDialogCancel>
-                            </AlertDialogFooter>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={clearFiles}
+                            >
+                              Delete All
+                            </Button>
                           </div>
-
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={clearFiles}
-                          >
-                            Delete All
-                          </Button>
                         </div>
-                      </div>
-                    )}
-                  </AlertDialogHeader>
-                </AlertDialogContent>
-              </AlertDialog>
+                      )}
+                    </AlertDialogHeader>
+                  </AlertDialogContent>
+                </AlertDialog>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="ml-auto">
+                      Columns <ChevronDown />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {table
+                      .getAllColumns()
+                      .filter((column) => column.getCanHide())
+                      .map((column) => {
+                        return (
+                          <DropdownMenuCheckboxItem
+                            key={column.id}
+                            className="capitalize"
+                            checked={column.getIsVisible()}
+                            onCheckedChange={(value) =>
+                              column.toggleVisibility(!!value)
+                            }
+                          >
+                            {column.id}
+                          </DropdownMenuCheckboxItem>
+                        );
+                      })}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+            <div className="overflow-hidden rounded-md border">
+              <Table>
+                <TableHeader>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => {
+                        return (
+                          <TableHead key={header.id}>
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext()
+                                )}
+                          </TableHead>
+                        );
+                      })}
+                    </TableRow>
+                  ))}
+                </TableHeader>
+                <TableBody>
+                  {table.getRowModel().rows?.length ? (
+                    table.getRowModel().rows.map((row) => (
+                      <TableRow
+                        key={row.id}
+                        data-state={row.getIsSelected() && "selected"}
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell key={cell.id}>
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={columns.length}
+                        className="h-24 text-center"
+                      >
+                        No results.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="flex items-center justify-end space-x-2 py-4">
+              <div className="text-muted-foreground flex-1 text-sm">
+                {table.getFilteredSelectedRowModel().rows.length} of{" "}
+                {table.getFilteredRowModel().rows.length} row(s) selected.
+              </div>
+              <div className="space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => table.previousPage()}
+                  disabled={!table.getCanPreviousPage()}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => table.nextPage()}
+                  disabled={!table.getCanNextPage()}
+                >
+                  Next
+                </Button>
+              </div>
             </div>
           </div>
-
-          <ScrollArea className="h-[340px] mb-12 px-4">
+          <ScrollArea className="h-[340px] hidden mb-12 px-4">
             <ul className="space-y-2">
               {serverFiles.map((file) => {
                 const fileUrl = `http://127.0.0.1:8000/download/${encodeURIComponent(
@@ -511,7 +737,9 @@ export default function UploadToServer() {
                           className="border rounded px-2 py-1 text-sm "
                         />
                       ) : (
-                        <span className="text-sm">{file.name}</span>
+                        <span className="text-sm">
+                          {file.name} {file.file_class}
+                        </span>
                       )}
                     </div>
 

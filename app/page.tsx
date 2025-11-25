@@ -5,7 +5,10 @@ import { useSession } from "./lib/auth-client";
 
 export default function DirectAccount() {
   const { data: session } = useSession();
-  if (session) {
-    redirect(`/${session.user.email}`);
-  }
+   const encodeEmail = (email: string) => {
+     return email.replace("@", "-").replace(/\./g, "");
+   };
+   if (session) {
+     redirect(`/${encodeEmail(session.user.email)}`);
+   }
 }

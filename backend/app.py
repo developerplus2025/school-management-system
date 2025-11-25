@@ -44,8 +44,8 @@ def save_meta(user_folder: str, meta: dict):
 # ------------------------
 #      SEARCH
 # ------------------------
-@app.get("/search")
-async def search_files(query: str = Query("*")):
+@app.get("/search/all")
+async def search_all(query: str = Query("*")):
     results = []
 
     for encoded_email in os.listdir(BASE_DIR):
@@ -71,6 +71,41 @@ async def search_files(query: str = Query("*")):
                     "file_class": file_meta.get("file_class"),
                     "download_url": f"http://127.0.0.1:8000/download/{urllib.parse.quote(file)}?user_email={urllib.parse.quote(user_email)}"
                 })
+    return {"results": results}
+
+
+# ------------------------
+# Search riêng cho một user
+# ------------------------
+@app.get("/search/user")
+async def search_user_files(
+    user_email: str,               # email người dùng
+    query: str = Query("*")        # từ khóa tìm kiếm
+):
+    encoded_email = encode_email(user_email)
+    user_path = os.path.join(BASE_DIR, encoded_email)
+    results = []
+
+    if not os.path.isdir(user_path):
+        return {"results": []}
+
+    meta = load_meta(user_path)
+
+    for file_name in os.listdir(user_path):
+        if file_name == "meta.json":
+            continue
+
+        if query == "*" or query.lower() in file_name.lower():
+            file_meta = meta.get(file_name, {})
+            results.append({
+                "user_email": user_email,
+                "filename": file_name,
+                "title": os.path.splitext(file_name)[0],
+                "label": file_meta.get("label"),
+                "date": file_meta.get("date"),
+                "file_class": file_meta.get("file_class"),
+                "download_url": f"http://127.0.0.1:8000/download/{urllib.parse.quote(file_name)}?user_email={urllib.parse.quote(user_email)}"
+            })
 
     return {"results": results}
 

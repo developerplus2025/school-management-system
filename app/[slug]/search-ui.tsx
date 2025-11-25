@@ -9,15 +9,6 @@ import { AnimatePresence, motion } from "motion/react";
 import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
 import "@cyntler/react-doc-viewer/dist/index.css";
 import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
@@ -60,118 +51,7 @@ import {
 import { cn } from "@/lib/utils";
 // import PdfViewer from "@/components/file-viewer/file-viewer";
 import { Document, Page } from "react-pdf";
-
-import {
-  ColumnDef,
-  ColumnFiltersState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  SortingState,
-  useReactTable,
-  VisibilityState,
-} from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
-export type TypeData = {
-  filename: string;
-  user_email: string;
-  download_url: string;
-  title: string;
-  label: string;
-  date: string;
-  file_class: string;
-};
-export const columns: ColumnDef<TypeData>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "date",
-    header: "Date",
-    cell: ({ row }) => <div className="capitalize">{row.getValue("date")}</div>,
-  },
-  {
-    accessorKey: "user_email",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Email
-          <ArrowUpDown />
-        </Button>
-      );
-    },
-    cell: ({ row }) => (
-      <div className="lowercase">{row.getValue("user_email")}</div>
-    ),
-  },
-  {
-    accessorKey: "filename",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          File Name
-          <ArrowUpDown />
-        </Button>
-      );
-    },
-
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("filename")}</div>
-    ),
-  },
-  {
-    accessorKey: "file_class",
-    header: "Class",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("file_class")}</div>
-    ),
-  },
-  {
-    accessorKey: "label",
-    header: "Subject",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("label")}</div>
-    ),
-  },
-];
+import { useSession } from "../lib/auth-client";
 type FileItem = { filename: string; download_url: string; user_id?: string };
 
 const data: Record<string, { icon: JSX.Element }> = {
@@ -551,14 +431,14 @@ const classFilterData = [
   { value: "12", name: "Class 12" },
 ];
 
-export default function HomeSearchPage() {
+export default function UserSearchPage() {
   const [query, setQuery] = useState("");
   const [copy, setCopy] = useState(false);
   const [filter, setFilter] = useState({
     subject: [] as string[],
     class: [] as string[],
   });
-
+ const { data: session } = useSession();
   const [downloadUrl, setDownloadUrl] = useState("");
   const [open, setOpen] = React.useState(false);
   function copyLink() {
@@ -593,43 +473,58 @@ export default function HomeSearchPage() {
     }[]
   >([]);
   const [loading, setLoading] = useState(false);
+const encodeEmail = (email: string) => {
+  return email.replace("@", "-").replace(/\./g, "");
+};
 
-  // 🔹 Hàm gọi API tìm kiếm
-  const handleSearch = async (searchText: string) => {
-    setLoading(true);
-    try {
-      const url =
-        searchText.trim() === ""
-          ? "http://127.0.0.1:8000/search/all?query=*"
-          : `http://127.0.0.1:8000/search/all?query=${encodeURIComponent(
-              searchText
-            )}`;
+const handleSearch = async (searchText: string, rawEmail: string) => {
+  setLoading(true);
 
-      const res = await fetch(url);
-      const data = await res.json();
-      console.log("Search All:", data);
-      setResults(data.results || []);
-    } catch (err) {
-      console.error("Lỗi khi tìm kiếm tất cả:", err);
-    } finally {
-      setIndex(results.length);
-      setTimeout(() => setLoading(false), 500);
-    }
-  };
+  try {
+    const userEmail = encodeEmail(rawEmail); // Tự encode
+
+    const url =
+      searchText.trim() === ""
+        ? `http://127.0.0.1:8000/files?user_email=${userEmail}`
+        : `http://127.0.0.1:8000/search/user?user_email=${userEmail}&query=${encodeURIComponent(
+            searchText
+          )}`;
+
+    const res = await fetch(url);
+    const data = await res.json();
+
+    setResults(data.results || []);
+  } catch (err) {
+    console.error("Lỗi khi tìm kiếm:", err);
+  } finally {
+    setIndex(results.length);
+    setTimeout(() => setLoading(false), 500);
+  }
+};
+
 
   // 🔹 Gọi API khi trang load lần đầu (lấy toàn bộ file)
-  useEffect(() => {
-    handleSearch("");
-  }, []);
 
   // 🔹 Tự động tìm khi người dùng nhập (debounce 500ms)
-  useEffect(() => {
-    const delayDebounce = setTimeout(() => {
-      handleSearch(query);
-    }, 500);
+ useEffect(() => {
+    if(session?.user.email) {
+          handleSearch("", session.user.email);
+    }
+ 
+ }, []);
 
-    return () => clearTimeout(delayDebounce);
-  }, [query]);
+ useEffect(() => {
+   
+   const delayDebounce = setTimeout(() => {
+  if (session?.user.email) {
+    handleSearch(query, session.user.email);
+  }
+    
+   }, 500);
+
+   return () => clearTimeout(delayDebounce);
+ }, [query,]);
+
   useEffect(() => {
     console.log(filter);
   }, [filter]);
@@ -670,347 +565,393 @@ export default function HomeSearchPage() {
   });
 
   const [docs, setDocs] = useState<{ uri: string }[]>([]);
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = React.useState({});
-  const table = useReactTable<TypeData>({
-    data: filteredResults,
-    columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-    },
-  });
 
   return (
     <div className="w-full h-[calc(100vh-60px)] pt-12 px-12 mx-auto  flex flex-col items-center gap-6">
       {/* Thanh tìm kiếm */}
-
-      <ul className="w-full">
-        <div className="w-full">
-          <div className="flex  gap-4 items-center justify-between py-4">
-            <InputGroup>
-              <InputGroupInput
-                placeholder="Filter file name..."
-                value={
-                  (table.getColumn("filename")?.getFilterValue() as string) ??
-                  ""
-                }
-                onChange={(event) =>
-                  table
-                    .getColumn("filename")
-                    ?.setFilterValue(event.target.value)
-                }
-                className="max-w-sm"
-              />
-              <InputGroupAddon>
-                <Search />
-              </InputGroupAddon>
-              <InputGroupAddon align="inline-end">
-                {results.length} results
-              </InputGroupAddon>
-            </InputGroup>
-
-            <div className="flex gap-4 items-center">
-              <div className="w-full justify-center  gap-6 flex items-center">
-                <Button
-                  onClick={() => toggleAll("subject", subjectFilterData)}
-                  variant="outline"
-                  size="sm"
-                  className={cn(
-                    filter.subject.length === 0
-                      ? "text-white"
-                      : "text-[#a1a1a1]"
-                  )}
+      <div className="flex w-full items-center justify-center gap-4">
+        <InputGroup className="w-fit bg-black!">
+          <InputGroupInput
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Enter file name to search..."
+            className="w-[500px] "
+          />
+          <InputGroupAddon>
+            <Search />
+          </InputGroupAddon>
+          <InputGroupAddon className="w-20 flex  " align="inline-end">
+            <p className="text-xs">Results:</p>
+            {loading ? (
+              <Spinner size="sm" />
+            ) : (
+              <AnimatePresence>
+                <motion.p
+                  exit={{ backdropFilter: "8px", opacity: 0 }}
+                  className="text-xs w-1"
                 >
-                  All Subjects
-                </Button>
-
-                {subjectFilterData
-                  .filter((d) => d.value !== "all")
-                  .map((data) => {
-                    const isSelected = filter.subject.includes(data.value);
-
-                    return (
-                      <Button
-                        key={data.id}
-                        disabled={filter.subject.length === 0} // disable khi All
-                        className={cn(
-                          isSelected ? "text-white" : "text-[#a1a1a1]",
-                          filter.subject.length === 0
-                            ? "opacity-40 cursor-not-allowed"
-                            : ""
-                        )}
-                        onClick={() => {
-                          if (filter.subject.length === 0) return;
-                          toggleFilter("subject", data.value);
-                        }}
-                        variant="outline"
-                        size="sm"
-                      >
-                        {data.icons}
-                        {data.name}
-                      </Button>
-                    );
-                  })}
-              </div>
-              <Popover open={open} onOpenChange={setOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={open}
-                    className=" "
-                  >
-                    {/* {filter
+                  {filter.subject.length === 0
+                    ? results.length
+                    : results.filter((item) =>
+                        filter.subject.includes(item.label)
+                      ).length}
+                </motion.p>
+              </AnimatePresence>
+            )}
+          </InputGroupAddon>
+        </InputGroup>
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={open}
+              className=" "
+            >
+              {/* {filter
                 ? subjectFilterData.find((framework) => framework.value === filter)
                     ?.name
                 : "All"} */}
-                    <svg
-                      data-testid="geist-icon"
-                      height={16}
-                      strokeLinejoin="round"
-                      viewBox="0 0 16 16"
-                      width={16}
-                      style={{
-                        color: "currentcolor",
+              <svg
+                data-testid="geist-icon"
+                height={16}
+                strokeLinejoin="round"
+                viewBox="0 0 16 16"
+                width={16}
+                style={{
+                  color: "currentcolor",
+                }}
+              >
+                <path
+                  fillRule="evenodd"
+                  clipRule="evenodd"
+                  d="M1 0H1.75H14.25H15V0.75V3V3.31066L14.7803 3.53033L10.5 7.81066V15.25V16H9.75H9H8.7816L8.59734 15.8827L5.84734 14.1327L5.5 13.9117V13.5V7.81066L1.21967 3.53033L1 3.31066V3V0.75V0ZM2.5 1.5V2.68934L6.78033 6.96967L7 7.18934V7.5V13.0883L9 14.361V7.5V7.18934L9.21967 6.96967L13.5 2.68934V1.5H2.5Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[200px] p-0">
+            <Command className="bg-black">
+              <CommandInput placeholder="Search filter..." className="h-9" />
+              <ScrollArea>
+                <CommandList className="bg-black">
+                  <CommandEmpty>No subject found.</CommandEmpty>
+
+                  {/* All Subjects */}
+                  <CommandGroup>
+                    <CommandItem
+                      value="all"
+                      onSelect={() => toggleAll("subject", subjectFilterData)}
+                    >
+                      All Subjects
+                      <Check
+                        className={cn(
+                          "ml-auto",
+                          filter.subject.length === 0
+                            ? "opacity-100"
+                            : "opacity-0"
+                        )}
+                      />
+                    </CommandItem>
+                  </CommandGroup>
+
+                  {/* Subject filter */}
+                  <CommandGroup heading="Subject">
+                    {subjectFilterData
+                      .filter((d) => d.value !== "all")
+                      .map((data) => (
+                        <CommandItem
+                          key={data.value}
+                          value={data.value}
+                          disabled={filter.subject.length === 0} // disable khi All bật
+                          onSelect={() => {
+                            if (filter.subject.length === 0) return;
+                            toggleFilter("subject", data.value);
+                          }}
+                        >
+                          {data.name}
+                          <Check
+                            className={cn(
+                              "ml-auto",
+                              filter.subject.includes(data.value)
+                                ? "opacity-100"
+                                : "opacity-0"
+                            )}
+                          />
+                        </CommandItem>
+                      ))}
+                  </CommandGroup>
+
+                  <CommandSeparator />
+
+                  {/* All Classes */}
+                  <CommandGroup>
+                    <CommandItem
+                      value="all"
+                      onSelect={() => toggleAll("class", classFilterData)}
+                    >
+                      All Classes
+                      <Check
+                        className={cn(
+                          "ml-auto",
+                          filter.class.length === 0
+                            ? "opacity-100"
+                            : "opacity-0"
+                        )}
+                      />
+                    </CommandItem>
+                  </CommandGroup>
+
+                  {/* Class filter */}
+                  <CommandGroup heading="Class">
+                    {classFilterData
+                      .filter((d) => d.value !== "all")
+                      .map((data) => (
+                        <CommandItem
+                          key={data.value}
+                          value={data.value}
+                          disabled={filter.class.length === 0} // disable khi All bật
+                          onSelect={() => {
+                            if (filter.class.length === 0) return;
+                            toggleFilter("class", data.value);
+                          }}
+                        >
+                          {data.name}
+                          <Check
+                            className={cn(
+                              "ml-auto",
+                              filter.class.includes(data.value)
+                                ? "opacity-100"
+                                : "opacity-0"
+                            )}
+                          />
+                        </CommandItem>
+                      ))}
+                  </CommandGroup>
+                </CommandList>
+              </ScrollArea>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      </div>
+      <div className="w-full justify-center  gap-6 flex items-center">
+        <Button
+          onClick={() => toggleAll("subject", subjectFilterData)}
+          variant="outline"
+          size="sm"
+          className={cn(
+            filter.subject.length === 0 ? "text-white" : "text-[#a1a1a1]"
+          )}
+        >
+          All Subjects
+        </Button>
+
+        {subjectFilterData
+          .filter((d) => d.value !== "all")
+          .map((data) => {
+            const isSelected = filter.subject.includes(data.value);
+
+            return (
+              <Button
+                key={data.id}
+                disabled={filter.subject.length === 0} // disable khi All
+                className={cn(
+                  isSelected ? "text-white" : "text-[#a1a1a1]",
+                  filter.subject.length === 0
+                    ? "opacity-40 cursor-not-allowed"
+                    : ""
+                )}
+                onClick={() => {
+                  if (filter.subject.length === 0) return;
+                  toggleFilter("subject", data.value);
+                }}
+                variant="outline"
+                size="sm"
+              >
+                {data.icons}
+                {data.name}
+              </Button>
+            );
+          })}
+      </div>
+      <ul>
+        {loading && results.length === 0 && (
+          <p className="text-sm text-muted-foreground text-center">
+            No results found.
+          </p>
+        )}
+
+        <ScrollArea className="h-[calc(100vh-270px)] px-4  ">
+          {" "}
+          <div className="grid grid-cols-4 place-content-between justify-between place-items-center w-full justify-items-center gap-8">
+            {filteredResults.map((file, idx) => {
+              const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(file.filename);
+
+              // ✅ 2. Lấy phần mở rộng file (luôn đảm bảo là string)
+              const ext = file.filename.includes(".")
+                ? file.filename.split(".").pop()!.toLowerCase()
+                : "unknown";
+
+              return (
+                <li
+                  key={idx}
+                  className="flex border border-dashed  h-full w-[320px] justify-between border-input flex-col gap-4   rounded-md p-3"
+                >
+                  <div className="flex flex-col h-full justify-between w-full items-center gap-3">
+                    <div className="flex gap-4 h-full items-center w-full">
+                      <div className="">
+                        {data[ext]?.icon || data.unknown.icon}
+                      </div>
+                      <div className="flex w-full h-full justify-between flex-col gap-2">
+                        {!file.filename && (
+                          <Skeleton className="w-[200p] h-5" />
+                        )}
+                        {file.filename && (
+                          <p className="font-medium font-[BeVietnamPro-Medium] break-all w-full wrap-break-word text-wrap text-xs ">
+                            {file.filename}
+                          </p>
+                        )}
+                        <p className="font-medium break-all w-full wrap-break-word text-wrap text-xs ">
+                          Class: {file.file_class}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          User:{" "}
+                          {file.user_email.replace("-gmailcom", "@gmail.com")}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {file.date}
+                        </p>
+                        <Badge
+                          variant={"outline"}
+                          className="text-xs px-0 border-none  text-blue-500"
+                        >
+                          # {file.label}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ✅ Các nút chức năng */}
+                  <div className="flex  w-full justify-between">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => window.open(file.download_url, "_blank")}
+                    >
+                      Download
+                    </Button>
+
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          onClick={() => {
+                            setIndex(idx);
+                            console.log(index);
+                            setDocs([
+                              {
+                                uri: `./uploads/${results[idx]?.user_email}/${results[idx]?.filename}`,
+                              },
+                            ]);
+                          }}
+                          size="sm"
+                          variant="outline"
+                        >
+                          View More
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="max-w-[1480px]! overflow-auto h-screen">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle className="hidden"></AlertDialogTitle>
+                        </AlertDialogHeader>
+                        <div className="h-full">
+                          <img
+                            className="rounded-lg"
+                            src={results[index]?.download_url}
+                            alt=""
+                          />
+                          {/* <DocViewer documents={docs} /> */}
+
+                          <DocViewer
+                            className="h-[560px]"
+                            documents={docs}
+                            initialActiveDocument={docs[1]}
+                            pluginRenderers={DocViewerRenderers}
+                          />
+
+                          {/* <iframe
+                            className="w-full rounded-lg h-[560px]"
+                            src={`./uploads/${file.user_email}/${file.filename}`}
+                          ></iframe> */}
+                        </div>
+
+                        <AlertDialogFooter className="flex w-full xl:justify-between">
+                          <Button
+                            onClick={() => {
+                              setIndex(index - 1);
+                              console.log(index);
+                            }}
+                            variant={"outline"}
+                            size={"sm"}
+                            className={` ${
+                              index == 0
+                                ? "disabled:bg-accent! pointer-events-none"
+                                : ""
+                            }`}
+                          >
+                            Previous File
+                          </Button>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <Button
+                            onClick={() => {
+                              setIndex(index + 1);
+                              console.log(index);
+                            }}
+                            variant={"outline"}
+                            size={"sm"}
+                            className={` ${
+                              index + 1 == results.length
+                                ? "disabled:bg-accent! pointer-events-none"
+                                : ""
+                            }`}
+                          >
+                            Next File
+                          </Button>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        copyLink();
+                        setDownloadUrl(file.download_url);
                       }}
                     >
-                      <path
-                        fillRule="evenodd"
-                        clipRule="evenodd"
-                        d="M1 0H1.75H14.25H15V0.75V3V3.31066L14.7803 3.53033L10.5 7.81066V15.25V16H9.75H9H8.7816L8.59734 15.8827L5.84734 14.1327L5.5 13.9117V13.5V7.81066L1.21967 3.53033L1 3.31066V3V0.75V0ZM2.5 1.5V2.68934L6.78033 6.96967L7 7.18934V7.5V13.0883L9 14.361V7.5V7.18934L9.21967 6.96967L13.5 2.68934V1.5H2.5Z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[200px] p-0">
-                  <Command className="bg-black">
-                    <CommandInput
-                      placeholder="Search filter..."
-                      className="h-9"
-                    />
-                    <ScrollArea>
-                      <CommandList className="bg-black">
-                        <CommandEmpty>No subject found.</CommandEmpty>
-
-                        {/* All Subjects */}
-                        <CommandGroup>
-                          <CommandItem
-                            value="all"
-                            onSelect={() =>
-                              toggleAll("subject", subjectFilterData)
-                            }
-                          >
-                            All Subjects
-                            <Check
-                              className={cn(
-                                "ml-auto",
-                                filter.subject.length === 0
-                                  ? "opacity-100"
-                                  : "opacity-0"
-                              )}
-                            />
-                          </CommandItem>
-                        </CommandGroup>
-
-                        {/* Subject filter */}
-                        <CommandGroup heading="Subject">
-                          {subjectFilterData
-                            .filter((d) => d.value !== "all")
-                            .map((data) => (
-                              <CommandItem
-                                key={data.value}
-                                value={data.value}
-                                disabled={filter.subject.length === 0} // disable khi All bật
-                                onSelect={() => {
-                                  if (filter.subject.length === 0) return;
-                                  toggleFilter("subject", data.value);
-                                }}
-                              >
-                                {data.name}
-                                <Check
-                                  className={cn(
-                                    "ml-auto",
-                                    filter.subject.includes(data.value)
-                                      ? "opacity-100"
-                                      : "opacity-0"
-                                  )}
-                                />
-                              </CommandItem>
-                            ))}
-                        </CommandGroup>
-
-                        <CommandSeparator />
-
-                        {/* All Classes */}
-                        <CommandGroup>
-                          <CommandItem
-                            value="all"
-                            onSelect={() => toggleAll("class", classFilterData)}
-                          >
-                            All Classes
-                            <Check
-                              className={cn(
-                                "ml-auto",
-                                filter.class.length === 0
-                                  ? "opacity-100"
-                                  : "opacity-0"
-                              )}
-                            />
-                          </CommandItem>
-                        </CommandGroup>
-
-                        {/* Class filter */}
-                        <CommandGroup heading="Class">
-                          {classFilterData
-                            .filter((d) => d.value !== "all")
-                            .map((data) => (
-                              <CommandItem
-                                key={data.value}
-                                value={data.value}
-                                disabled={filter.class.length === 0} // disable khi All bật
-                                onSelect={() => {
-                                  if (filter.class.length === 0) return;
-                                  toggleFilter("class", data.value);
-                                }}
-                              >
-                                {data.name}
-                                <Check
-                                  className={cn(
-                                    "ml-auto",
-                                    filter.class.includes(data.value)
-                                      ? "opacity-100"
-                                      : "opacity-0"
-                                  )}
-                                />
-                              </CommandItem>
-                            ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </ScrollArea>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="ml-auto">
-                    Columns <ChevronDown />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {table
-                    .getAllColumns()
-                    .filter((column) => column.getCanHide())
-                    .map((column) => {
-                      return (
-                        <DropdownMenuCheckboxItem
-                          key={column.id}
-                          className="capitalize"
-                          checked={column.getIsVisible()}
-                          onCheckedChange={(value) =>
-                            column.toggleVisibility(!!value)
-                          }
-                        >
-                          {column.id}
-                        </DropdownMenuCheckboxItem>
-                      );
-                    })}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-          <div className="overflow-hidden rounded-md border">
-            <Table>
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => {
-                      return (
-                        <TableHead key={header.id}>
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                        </TableHead>
-                      );
-                    })}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      data-state={row.getIsSelected() && "selected"}
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center"
-                    >
-                      No results.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-          <div className="flex items-center justify-end space-x-2 py-4">
-            <div className="text-muted-foreground flex-1 text-sm">
-              {table.getFilteredSelectedRowModel().rows.length} of{" "}
-              {table.getFilteredRowModel().rows.length} row(s) selected.
-            </div>
-            <div className="space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
-        </div>
+                      Share
+                    </Button>
+                  </div>
+                </li>
+              );
+            })}
+          </div>{" "}
+        </ScrollArea>
       </ul>
+
+      {/* {loading && (
+        <div className="grid grid-cols-5 w-full justify-items-center gap-8">
+          <li className="flex border border-input flex-col gap-4 items-center justify-between rounded-md p-3">
+            {" "}
+            <div className="flex flex-col items-center gap-3">
+              <Skeleton className="w-[200px] h-[200px]  rounded-md object-cover" />
+            </div>
+            <div className="flex gap-8 justify-between">
+              <Skeleton className="text-sm h-5 w-[100px]"></Skeleton>
+              <Skeleton className="text-sm h-5 w-[100px]"></Skeleton>
+            </div>
+          </li>
+        </div>
+      )} */}
     </div>
   );
 }
