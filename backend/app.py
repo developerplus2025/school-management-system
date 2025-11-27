@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, Form, Query, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, Query, HTTPException , Depends
 from fastapi.responses import FileResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 import os, shutil, urllib.parse, json
@@ -40,6 +40,17 @@ def save_meta(user_folder: str, meta: dict):
     meta_path = os.path.join(user_folder, "meta.json")
     with open(meta_path, "w") as f:
         json.dump(meta, f, indent=2)
+def load_user(user_folder: str) -> dict:
+    user_path = os.path.join(user_folder, "user.json")
+    if os.path.exists(user_path):
+        with open(user_path, "r") as f:
+            return json.load(f)
+    return {}
+
+def save_user(user_folder: str, user_data: dict):
+    user_path = os.path.join(user_folder, "user.json")
+    with open(user_path, "w") as f:
+        json.dump(user_data, f, indent=2)
 
 # ------------------------
 #      SEARCH
@@ -57,7 +68,7 @@ async def search_all(query: str = Query("*")):
         meta = load_meta(user_path)
 
         for file in os.listdir(user_path):
-            if file == "meta.json":
+            if file == "meta.json" or file == "user.json" or file.lower() == "avatar":
                 continue
 
             if query == "*" or query.lower() in file.lower():
@@ -92,7 +103,7 @@ async def search_user_files(
     meta = load_meta(user_path)
 
     for file_name in os.listdir(user_path):
-        if file_name == "meta.json":
+        if file_name == "meta.json" or file_name == "user.json" or file_name.lower() == "avatar":
             continue
 
         if query == "*" or query.lower() in file_name.lower():
@@ -164,8 +175,13 @@ async def list_files(user_email: str):
     files = []
 
     for f in os.listdir(user_folder):
-        if f == "meta.json":
+        # Bỏ qua user.json và thư mục avatar
+        if f == "meta.json" or f == "user.json" or f.lower() == "avatar":
             continue
+        file_path = os.path.join(user_folder, f)
+        if os.path.isdir(file_path):
+            continue  # bỏ qua thư mục khác
+
         file_meta = meta.get(f, {})
         files.append({
             "name": f,
@@ -177,6 +193,7 @@ async def list_files(user_email: str):
         })
 
     return {"files": files}
+
 
 # ------------------------
 #      DOWNLOAD FILE
@@ -231,6 +248,82 @@ async def rename_file(
     return {
         "message": f"Đổi tên file '{old_name}' thành '{new_name + os.path.splitext(old_name)[1]}' thành công!"
     }
+@app.post("/upload/avatar")
+async def upload_avatar(
+    user_email: str = Form(...),
+    file: UploadFile = File(...)
+):
+    encoded_email = encode_email(user_email)
+    user_folder = os.path.join(BASE_DIR, encoded_email)
+    avatar_folder = os.path.join(user_folder, "avatar")
+    os.makedirs(avatar_folder, exist_ok=True)
+
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext not in [".jpg", ".jpeg", ".png"]:
+        raise HTTPException(400, detail="Chỉ hỗ trợ JPG, JPEG hoặc PNG")
+
+    filename = f"avatar{ext}"
+    avatar_path = os.path.join(avatar_folder, filename)
+
+    # Lưu file avatar
+    with open(avatar_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    # Cập nhật user.json
+    user_data = load_user(user_folder)
+    user_data["avatar_url"] = f"http://localhost:3000/uploads/{encoded_email}/avatar/{filename}"
+    save_user(user_folder, user_data)
+
+    return {
+        "message": "Upload avatar thành công!",
+        "avatar_url": user_data["avatar_url"]
+    }
+@app.get("/avatar")
+async def get_avatar(user_email: str):
+    encoded_email = encode_email(user_email)
+    user_folder = os.path.join(BASE_DIR, encoded_email)
+    avatar_folder = os.path.join(user_folder, "avatar")
+
+    user_data = load_user(user_folder)
+    avatar_url = user_data.get("avatar_url")
+
+    if not avatar_url:
+        raise HTTPException(404, detail="User chưa có avatar!")
+
+    avatar_path = os.path.join(avatar_folder, os.path.basename(avatar_url))
+    if not os.path.exists(avatar_path):
+        raise HTTPException(404, detail="Avatar không tồn tại!")
+
+    ext = os.path.splitext(avatar_path)[1]
+    content_type = "image/jpeg" if ext.lower() in [".jpg", ".jpeg"] else "image/png"
+
+    return FileResponse(avatar_path, media_type=content_type, filename=os.path.basename(avatar_path))
+@app.delete("/avatar")
+async def delete_avatar(user_email: str):
+    encoded_email = encode_email(user_email)
+    user_folder = os.path.join(BASE_DIR, encoded_email)
+    avatar_folder = os.path.join(user_folder, "avatar")
+    user_json_path = os.path.join(user_folder, "user.json")
+
+    # Load user.json
+    if not os.path.exists(user_json_path):
+        raise HTTPException(404, "User JSON không tồn tại")
+
+    with open(user_json_path, "r") as f:
+        user_data = json.load(f)
+
+    # Xóa avatar file
+    if os.path.exists(avatar_folder):
+        shutil.rmtree(avatar_folder)
+
+    # Xóa avatar trong user.json
+    user_data["avatar"] = None
+
+    with open(user_json_path, "w") as f:
+        json.dump(user_data, f, indent=4)
+
+    return {"message": "Xoá avatar thành công!"}
+
 
 # ------------------------
 #      DELETE FILE

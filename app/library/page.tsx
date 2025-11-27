@@ -25,7 +25,14 @@ import {
   InputGroupText,
   InputGroupTextarea,
 } from "@/components/ui/input-group";
-import { Check, ChevronsUpDown, icons, ListStart, Search } from "lucide-react";
+import {
+  Check,
+  ChevronsUpDown,
+  ChevronUp,
+  icons,
+  ListStart,
+  Search,
+} from "lucide-react";
 
 import { toast } from "sonner";
 import {
@@ -141,6 +148,7 @@ export const columns: ColumnDef<TypeData>[] = [
   },
   {
     accessorKey: "filename",
+
     header: ({ column }) => {
       return (
         <Button
@@ -170,6 +178,34 @@ export const columns: ColumnDef<TypeData>[] = [
     cell: ({ row }) => (
       <div className="capitalize">{row.getValue("label")}</div>
     ),
+  },
+  {
+    id: "actions",
+    enableHiding: false,
+    cell: ({ row }) => {
+      const data = row.original;
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuItem
+              onClick={() => navigator.clipboard.writeText(data.download_url)}
+            >
+              Copy download url
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>View file</DropdownMenuItem>
+            <DropdownMenuItem>View file details</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    },
   },
 ];
 type FileItem = { filename: string; download_url: string; user_id?: string };
@@ -681,6 +717,7 @@ export default function HomeSearchPage() {
   const [rowSelection, setRowSelection] = React.useState({});
   const table = useReactTable<TypeData>({
     data: filteredResults,
+
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -695,11 +732,18 @@ export default function HomeSearchPage() {
       columnFilters,
       columnVisibility,
       rowSelection,
+      // pagination: {
+      //   pageIndex: 0,
+      //   pageSize: 8,
+      // },
     },
   });
+  useEffect(() => {
+    table.setPageSize(8); // đặt pageSize mặc định
+  }, [table]);
 
   return (
-    <div className="w-full h-[calc(100vh-60px)] pt-12 px-12 mx-auto  flex flex-col items-center gap-6">
+    <div className="w-full h-[calc(100vh-100px)] pt-12 px-12 mx-auto  flex flex-col items-center gap-6">
       {/* Thanh tìm kiếm */}
 
       <ul className="w-full">
@@ -909,7 +953,7 @@ export default function HomeSearchPage() {
                   </Command>
                 </PopoverContent>
               </Popover>
-              <DropdownMenu>
+              <DropdownMenu onOpenChange={setOpen}>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="ml-auto">
                     Columns <ChevronDown />
@@ -929,7 +973,7 @@ export default function HomeSearchPage() {
                             column.toggleVisibility(!!value)
                           }
                         >
-                          {column.id}
+                          {column.id.replace("_", " ")}
                         </DropdownMenuCheckboxItem>
                       );
                     })}
@@ -937,7 +981,7 @@ export default function HomeSearchPage() {
               </DropdownMenu>
             </div>
           </div>
-          <div className="overflow-hidden rounded-md border">
+          <div className="overflow-hidden  rounded-md border">
             <Table>
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
