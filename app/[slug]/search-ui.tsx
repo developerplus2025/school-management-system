@@ -583,7 +583,7 @@ const handleSearch = async (searchText: string, rawEmail: string) => {
           <InputGroupAddon className="w-20 flex  " align="inline-end">
             <p className="text-xs">Results:</p>
             {loading ? (
-              <Spinner size="sm" />
+              <Spinner />
             ) : (
               <AnimatePresence>
                 <motion.p

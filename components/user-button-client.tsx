@@ -34,6 +34,8 @@ import { useRouter } from "next/navigation";
 import { useSearchContext } from "fumadocs-ui/contexts/search";
 import { authClient } from "@/app/lib/auth-client";
 import Image from "next/image";
+import { Avatar } from "@radix-ui/react-avatar";
+import { AvatarFallback, AvatarImage } from "./ui/avatar";
 function removeVietnameseTones(str?: string): string {
   if (!str) return "";
   return str
@@ -72,7 +74,7 @@ const itemsPartOne = [
         <path d="M216,72H131.31L104,44.69A15.88,15.88,0,0,0,92.69,40H40A16,16,0,0,0,24,56V200.62A15.41,15.41,0,0,0,39.39,216h177.5A15.13,15.13,0,0,0,232,200.89V88A16,16,0,0,0,216,72ZM40,56H92.69l16,16H40Z"></path>
       </svg>
     ),
-    directLink: "dashboard",
+    directLink: `user`,
   },
   {
     name: "Create Projects",
@@ -104,7 +106,7 @@ const itemsPartTwo = [
         <path d="M224,120v96a8,8,0,0,1-8,8H160a8,8,0,0,1-8-8V164a4,4,0,0,0-4-4H108a4,4,0,0,0-4,4v52a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a16,16,0,0,1,4.69-11.31l80-80a16,16,0,0,1,22.62,0l80,80A16,16,0,0,1,224,120Z"></path>
       </svg>
     ),
-    directLink: "",
+    directLink: "home",
   },
   {
     name: "Pricing",
@@ -152,7 +154,7 @@ export default function UserButtonClient() {
     error, //error object
     refetch, //refetch the session
   } = authClient.useSession();
-
+  const userName = session?.user.name;
   const handleLogout = async () => {
     await authClient.signOut();
     authClient.refreshToken;
@@ -221,6 +223,12 @@ export default function UserButtonClient() {
       callbackURL: "/",
     });
   };
+  const encodeEmail = (email: string) => {
+    return email.replace("@", "-").replace(/\./g, "");
+  };
+  const imageUrl =
+    session?.user.image ||
+    `https://avatar.vercel.sh/${encodeURIComponent(userName)}?size=60`;
   if (isPending) {
     return <div />;
   }
@@ -287,18 +295,15 @@ export default function UserButtonClient() {
         {session?.user && (
           <div>
             <div
-              ref={refs.setReference}
+              ref={(node) => refs.setReference(node)}
               {...getReferenceProps()}
               onClick={() => setIsOpen(!isOpen)}
               className="cursor-pointer"
             >
-              <img
-                className=" rounded-full size-8 "
-                alt="person"
-                src={String(session.user.image)}
-                width="20"
-                height="20"
-              ></img>
+              <Avatar className="">
+                <AvatarImage className=" rounded-full size-8" src={imageUrl} />
+                <AvatarFallback>{userName[0]}</AvatarFallback>
+              </Avatar>
               {/* {session && session.user && session.user.image ? (
                 <img
                   height={40}
@@ -315,7 +320,9 @@ export default function UserButtonClient() {
             {isMounted && (
               <div
                 {...getFloatingProps()}
-                ref={refs.setFloating}
+                ref={(node) => {
+                  refs.setFloating(node);
+                }}
                 style={floatingStyles}
               >
                 <div
@@ -348,7 +355,13 @@ export default function UserButtonClient() {
                           } justify-between`}
                           variant="outline"
                           onClick={() =>
-                            router.push(`/${itemsPartOne.directLink}`)
+                            router.push(
+                              `/${
+                                itemsPartOne.directLink == "user"
+                                  ? encodeEmail(session.user.email)
+                                  : itemsPartOne.directLink
+                              }`
+                            )
                           }
                         >
                           {itemsPartOne.name}
