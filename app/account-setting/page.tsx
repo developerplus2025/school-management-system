@@ -112,9 +112,9 @@ export default function AccountSettings() {
   if (!user) return <div>Đang tải...</div>;
 
   return (
-    <Card className="max-w-xl mx-auto mt-10">
+    <Card className="max-w-xl bg-black mx-auto mt-56">
       <CardHeader>
-        <CardTitle>Account Settings</CardTitle>
+        <CardTitle className="text-center">Account Settings</CardTitle>
       </CardHeader>
 
       <CardContent className="space-y-4">
@@ -128,9 +128,9 @@ export default function AccountSettings() {
           />
 
           <div className="flex flex-col gap-2">
-            <Button asChild disabled={loading}>
+            <Button variant={"outline"} asChild disabled={loading}>
               <label className="cursor-pointer">
-                Thay đổi avatar
+                Change avatar
                 <input
                   type="file"
                   className="hidden"
@@ -141,15 +141,15 @@ export default function AccountSettings() {
             </Button>
 
             <Button
-              variant="destructive"
+              variant="outline"
               onClick={handleDeleteAvatar}
               disabled={loading}
             >
-              Xoá avatar
+              Delete avatar
             </Button>
 
             {loading && (
-              <p className="text-sm text-muted-foreground">Đang xử lý...</p>
+              <p className="text-sm text-muted-foreground">Processing...</p>
             )}
           </div>
         </div>
