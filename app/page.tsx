@@ -14,6 +14,6 @@ export default function DirectAccount() {
    if (session) {
      redirect(`/${encodeEmail(session.user.email)}`);
    }else{
-     redirect(`/login`);
+     redirect(`/sign-up`);
    }
 }
