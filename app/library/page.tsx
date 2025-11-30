@@ -91,9 +91,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export type TypeData = {
-  filename: string;
+  file_name: string;
   user_email: string;
   download_url: string;
   title: string;
@@ -147,7 +149,7 @@ export const columns: ColumnDef<TypeData>[] = [
     ),
   },
   {
-    accessorKey: "filename",
+    accessorKey: "file_name",
 
     header: ({ column }) => {
       return (
@@ -162,7 +164,7 @@ export const columns: ColumnDef<TypeData>[] = [
     },
 
     cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("filename")}</div>
+      <div className="capitalize">{row.getValue("file_name")}</div>
     ),
   },
   {
@@ -184,6 +186,8 @@ export const columns: ColumnDef<TypeData>[] = [
     enableHiding: false,
     cell: ({ row }) => {
       const data = row.original;
+      const currentIndex = row.index;
+
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -192,15 +196,79 @@ export const columns: ColumnDef<TypeData>[] = [
               <MoreHorizontal />
             </Button>
           </DropdownMenuTrigger>
+
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
+
             <DropdownMenuItem
               onClick={() => navigator.clipboard.writeText(data.download_url)}
             >
               Copy download url
             </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => window.open(data.download_url, "_blank")}
+            >
+              Download
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <a
+                href={`http://localhost:3000/view-file?url=/uploads/${
+                  data.user_email
+                }/${encodeURIComponent(data.file_name)}`}
+                target="_blank" // mở tab mới
+                rel="noopener noreferrer"
+              >
+                View file
+              </a>
+            </DropdownMenuItem>
+
             <DropdownMenuSeparator />
-            <DropdownMenuItem>View file</DropdownMenuItem>
+
+            {/* <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <DropdownMenuItem
+                  onClick={() => {
+                    [
+                      {
+                        uri: `./uploads/${data.user_email}/${data.file_name}`,
+                      },
+                    ];
+                  }}
+                >
+                  View More
+                </DropdownMenuItem>
+              </AlertDialogTrigger>
+
+              <AlertDialogContent className="max-w-[1480px] overflow-auto h-screen">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="hidden"></AlertDialogTitle>
+                </AlertDialogHeader>
+
+                <div className="h-full">
+                  <img className="rounded-lg" src={data.download_url} alt="" />
+
+                  <DocViewer
+                    className="h-[560px]"
+                    documents={[
+                      {
+                        uri: `./uploads/${data.user_email}/${data.file_name}`,
+                      },
+                    ]}
+                    initialActiveDocument={
+                      [
+                        {
+                          uri: `./uploads/${data.user_email}/${data.file_name}`,
+                        },
+                      ][0]
+                    }
+                    pluginRenderers={DocViewerRenderers}
+                  />
+                </div>
+
+                <AlertDialogFooter className="flex w-full xl:justify-between"></AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog> */}
+
             <DropdownMenuItem>View file details</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -208,7 +276,7 @@ export const columns: ColumnDef<TypeData>[] = [
     },
   },
 ];
-type FileItem = { filename: string; download_url: string; user_id?: string };
+type FileItem = { file_name: string; download_url: string; user_id?: string };
 
 const data: Record<string, { icon: JSX.Element }> = {
   png: {
@@ -619,7 +687,7 @@ export default function HomeSearchPage() {
   const [index, setIndex] = useState(0);
   const [results, setResults] = useState<
     {
-      filename: string;
+      file_name: string;
       user_email: string;
       download_url: string;
       title: string;
@@ -696,15 +764,18 @@ export default function HomeSearchPage() {
   }
 
   const filteredResults = useMemo(() => {
-    return results.filter((file) => {
-      const matchSubject =
-        filter.subject.length === 0 || filter.subject.includes(file.label);
+    return results
+      .slice()
+      .reverse()
+      .filter((file) => {
+        const matchSubject =
+          filter.subject.length === 0 || filter.subject.includes(file.label);
 
-      const matchClass =
-        filter.class.length === 0 || filter.class.includes(file.file_class);
+        const matchClass =
+          filter.class.length === 0 || filter.class.includes(file.file_class);
 
-      return matchSubject && matchClass;
-    });
+        return matchSubject && matchClass;
+      });
   }, [results, filter]);
 
   const [docs, setDocs] = useState<{ uri: string }[]>([]);
@@ -732,10 +803,6 @@ export default function HomeSearchPage() {
       columnFilters,
       columnVisibility,
       rowSelection,
-      // pagination: {
-      //   pageIndex: 0,
-      //   pageSize: 8,
-      // },
     },
   });
   useEffect(() => {
@@ -753,12 +820,12 @@ export default function HomeSearchPage() {
               <InputGroupInput
                 placeholder="Filter file name..."
                 value={
-                  (table.getColumn("filename")?.getFilterValue() as string) ??
+                  (table.getColumn("file_name")?.getFilterValue() as string) ??
                   ""
                 }
                 onChange={(event) =>
                   table
-                    .getColumn("filename")
+                    .getColumn("file_name")
                     ?.setFilterValue(event.target.value)
                 }
                 className="max-w-sm"
@@ -1010,10 +1077,15 @@ export default function HomeSearchPage() {
                     >
                       {row.getVisibleCells().map((cell) => (
                         <TableCell key={cell.id}>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
+                          {cell.column.id === "user_email"
+                            ? String(cell.getValue()).replace(
+                                "-gmailcom",
+                                "@gmail.com"
+                              )
+                            : flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext()
+                              )}
                         </TableCell>
                       ))}
                     </TableRow>
@@ -1036,6 +1108,22 @@ export default function HomeSearchPage() {
               {table.getFilteredSelectedRowModel().rows.length} of{" "}
               {table.getFilteredRowModel().rows.length} row(s) selected.
             </div>
+            {Array.from({ length: table.getPageCount() }, (_, i) => (
+              <Button
+                variant={"outline"}
+                size={"sm"}
+                key={i}
+                onClick={() => table.setPageIndex(i)}
+                className={
+                  table.getState().pagination.pageIndex === i
+                    ? ""
+                    : "text-[#a1a1a1]"
+                }
+              >
+                {i + 1}
+              </Button>
+            ))}
+
             <div className="space-x-2">
               <Button
                 variant="outline"

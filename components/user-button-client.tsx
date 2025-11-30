@@ -224,6 +224,7 @@ export default function UserButtonClient() {
     });
   };
   const encodeEmail = (email: string) => {
+    if (email) return "";
     return email.replace("@", "-").replace(/\./g, "");
   };
   const imageUrl =
@@ -333,7 +334,7 @@ export default function UserButtonClient() {
                   <div className="flex w-full flex-col gap-2">
                     <div className="flex flex-col gap-1 px-4 py-2">
                       <h1 className="text-sm">{cleanName}</h1>
-                      <span className="text-sm text-[#a1a1a1]">
+                      <span className="text-sm text-[#a1a1a1] truncate">
                         {session?.user?.email ?? ""}
                       </span>
                     </div>

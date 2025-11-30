@@ -75,7 +75,7 @@ async def search_all(query: str = Query("*")):
                 file_meta = meta.get(file, {})
                 results.append({
                     "user_email": user_email,
-                    "filename": file,
+                    "file_name": file,
                     "title": os.path.splitext(file)[0],
                     "label": file_meta.get("label"),
                     "date": file_meta.get("date"),
@@ -110,7 +110,7 @@ async def search_user_files(
             file_meta = meta.get(file_name, {})
             results.append({
                 "user_email": user_email,
-                "filename": file_name,
+                "file_name": file_name,
                 "title": os.path.splitext(file_name)[0],
                 "label": file_meta.get("label"),
                 "date": file_meta.get("date"),
@@ -140,21 +140,21 @@ async def upload_files(
     saved_files = []
 
     for file, title, label, date_value, cls in zip(files, titles, labels, date, file_class):
-        filename = f"{title.strip()}{os.path.splitext(file.filename)[1]}"
-        file_path = os.path.join(user_folder, filename)
+        file_name = f"{title.strip()}{os.path.splitext(file.filename)[1]}"
+        file_path = os.path.join(user_folder, file_name)
 
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        meta[filename] = {"label": label, "date": date_value, "file_class": cls}
+        meta[file_name] = {"label": label, "date": date_value, "file_class": cls}
 
         saved_files.append({
-            "name": filename,
+            "name": file_name,
             "title": title,
             "label": label,
             "date": date_value,
             "file_class": cls,
-            "public_url": f"/uploads/{encoded_email}/{filename}"
+            "public_url": f"/uploads/{encoded_email}/{file_name}"
         })
 
     save_meta(user_folder, meta)
@@ -198,23 +198,24 @@ async def list_files(user_email: str):
 # ------------------------
 #      DOWNLOAD FILE
 # ------------------------
-@app.head("/download/{filename}")
-async def head_file(filename: str, user_email: str):
+@app.head("/download/{file_name}")
+async def head_file(file_name: str, user_email: str):
     encoded_email = encode_email(user_email)
-    file_path = os.path.join(BASE_DIR, encoded_email, filename)
+    file_path = os.path.join(BASE_DIR, encoded_email, file_name)
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="File không tồn tại!")
 
     return Response(status_code=200, headers={"Content-Type": "application/pdf"})
 
-@app.get("/download/{filename}")
-async def download_file(filename: str, user_email: str):
+@app.get("/download/{file_name}")
+async def download_file(file_name: str, user_email: str):
     encoded_email = encode_email(user_email)
-    file_path = os.path.join(BASE_DIR, encoded_email, filename)
+    file_path = os.path.join(BASE_DIR, encoded_email, file_name)
     if not os.path.exists(file_path):
         raise HTTPException(404, "File không tồn tại")
 
-    return FileResponse(file_path, media_type="application/pdf", filename=filename)
+    return FileResponse(file_path, media_type="application/pdf", filename=file_name)
+
 # ------------------------
 #      RENAME FILE
 # ------------------------
@@ -258,12 +259,12 @@ async def upload_avatar(
     avatar_folder = os.path.join(user_folder, "avatar")
     os.makedirs(avatar_folder, exist_ok=True)
 
-    ext = os.path.splitext(file.filename)[1].lower()
+    ext = os.path.splitext(file.file_name)[1].lower()
     if ext not in [".jpg", ".jpeg", ".png"]:
         raise HTTPException(400, detail="Chỉ hỗ trợ JPG, JPEG hoặc PNG")
 
-    filename = f"avatar{ext}"
-    avatar_path = os.path.join(avatar_folder, filename)
+    file_name = f"avatar{ext}"
+    avatar_path = os.path.join(avatar_folder, file_name)
 
     # Lưu file avatar
     with open(avatar_path, "wb") as buffer:
@@ -271,7 +272,7 @@ async def upload_avatar(
 
     # Cập nhật user.json
     user_data = load_user(user_folder)
-    user_data["avatar_url"] = f"http://localhost:3000/uploads/{encoded_email}/avatar/{filename}"
+    user_data["avatar_url"] = f"http://localhost:3000/uploads/{encoded_email}/avatar/{file_name}"
     save_user(user_folder, user_data)
 
     return {
@@ -297,7 +298,7 @@ async def get_avatar(user_email: str):
     ext = os.path.splitext(avatar_path)[1]
     content_type = "image/jpeg" if ext.lower() in [".jpg", ".jpeg"] else "image/png"
 
-    return FileResponse(avatar_path, media_type=content_type, filename=os.path.basename(avatar_path))
+    return FileResponse(avatar_path, media_type=content_type, file_name=os.path.basename(avatar_path))
 @app.delete("/avatar")
 async def delete_avatar(user_email: str):
     encoded_email = encode_email(user_email)
@@ -328,11 +329,11 @@ async def delete_avatar(user_email: str):
 # ------------------------
 #      DELETE FILE
 # ------------------------
-@app.delete("/delete/{filename}")
-async def delete_file(filename: str, user_email: str):
+@app.delete("/delete/{file_name}")
+async def delete_file(file_name: str, user_email: str):
     encoded_email = encode_email(user_email)
     user_folder = os.path.join(BASE_DIR, encoded_email)
-    file_path = os.path.join(user_folder, filename)
+    file_path = os.path.join(user_folder, file_name)
 
     if not os.path.exists(file_path):
         return {"error": "File không tồn tại!"}
@@ -340,8 +341,8 @@ async def delete_file(filename: str, user_email: str):
     os.remove(file_path)
 
     meta = load_meta(user_folder)
-    if filename in meta:
-        del meta[filename]
+    if file_name in meta:
+        del meta[file_name]
         save_meta(user_folder, meta)
 
-    return {"message": f"Đã xóa file '{filename}' thành công!"}
+    return {"message": f"Đã xóa file '{file_name}' thành công!"}

@@ -285,18 +285,18 @@ export default function UploadToServer() {
   };
 
   // ❌ Xóa file
-  const handleDeleteFile = async (filename: string) => {
+  const handleDeleteFile = async (file_name: string) => {
     if (!token || !userEmail) {
       toast.warning("Vui lòng đăng nhập để xóa file.");
       return;
     }
 
-    if (!confirm(`Bạn có chắc muốn xóa "${filename}" không?`)) return;
+    if (!confirm(`Bạn có chắc muốn xóa "${file_name}" không?`)) return;
 
     try {
       const res = await fetch(
         `http://127.0.0.1:8000/delete/${encodeURIComponent(
-          filename
+          file_name
         )}?user_email=${userEmail}`,
         {
           method: "DELETE",

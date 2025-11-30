@@ -1,7 +1,7 @@
 "use client"
 import React from "react";
 import { Button } from "./ui/button";
-import { authClient } from "@/app/lib/auth-client";
+import { authClient, useSession } from "@/app/lib/auth-client";
 import { usePathname, useRouter } from "next/navigation";
 import UserButtonClient from "./user-button-client";
 import Link from "next/link";
@@ -56,8 +56,13 @@ export default function Navigation() {
     refetch();
     router.push("/");
   };
+
   return (
-    <div className="w-full fixed  z-20 top-0 bg-black px-12 border-b flex justify-between items-center border-input h-[60px]">
+    <div
+      className={`w-full fixed  z-20 top-0 bg-black px-12 border-b ${
+        pathname == "/view-file" || pathname == "/sign-up" ? "hidden" : "flex"
+      } justify-between items-center border-input h-[60px]`}
+    >
       <div className="flex gap-8 items-center">
         <Link href={"/home"} className="text-md font-semibold">
           DocsFuture

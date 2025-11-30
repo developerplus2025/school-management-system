@@ -6026,15 +6026,15 @@ class JpxImage {
     fallbackCallback(instance);
   }
   static async #instantiateWasm(fallbackCallback, imports, successCallback) {
-    const filename = "openjpeg.wasm";
+    const file_name = "openjpeg.wasm";
     try {
       if (!this.#buffer) {
         if (this.#useWorkerFetch) {
-          this.#buffer = await fetchBinaryData(`${this.#wasmUrl}${filename}`);
+          this.#buffer = await fetchBinaryData(`${this.#wasmUrl}${file_name}`);
         } else {
           this.#buffer = await this.#handler.sendWithPromise("FetchBinaryData", {
             type: "wasmFactory",
-            filename
+            file_name
           });
         }
       }
@@ -32042,16 +32042,16 @@ class PartialEvaluator {
     if (this.options.useSystemFonts && name !== "Symbol" && name !== "ZapfDingbats") {
       return null;
     }
-    const standardFontNameToFileName = getFontNameToFileMap(),
-      filename = standardFontNameToFileName[name];
+    const standardFontNameTofile_name = getFontNameToFileMap(),
+      file_name = standardFontNameTofile_name[name];
     let data;
     try {
       if (this.options.useWorkerFetch) {
-        data = await fetchBinaryData(`${this.options.standardFontDataUrl}${filename}`);
+        data = await fetchBinaryData(`${this.options.standardFontDataUrl}${file_name}`);
       } else {
         data = await this.handler.sendWithPromise("FetchBinaryData", {
           type: "standardFontDataFactory",
-          filename
+          file_name
         });
       }
     } catch (ex) {
@@ -36497,13 +36497,13 @@ class FileSpec {
       }
     }
   }
-  get filename() {
-    let filename = "";
+  get file_name() {
+    let file_name = "";
     const item = pickPlatformItem(this.root);
     if (item && typeof item === "string") {
-      filename = stringToPDFString(item, true).replaceAll("\\\\", "\\").replaceAll("\\/", "/").replaceAll("\\", "/");
+      file_name = stringToPDFString(item, true).replaceAll("\\\\", "\\").replaceAll("\\/", "/").replaceAll("\\", "/");
     }
-    return shadow(this, "filename", filename || "unnamed");
+    return shadow(this, "file_name", file_name || "unnamed");
   }
   get content() {
     if (!this.#contentAvailable) {
@@ -36533,8 +36533,8 @@ class FileSpec {
   }
   get serializable() {
     return {
-      rawFilename: this.filename,
-      filename: stripPath(this.filename),
+      rawfile_name: this.file_name,
+      file_name: stripPath(this.file_name),
       content: this.content,
       description: this.description
     };
@@ -39179,9 +39179,9 @@ class Catalog {
           if (urlDict instanceof Dict) {
             const fs = new FileSpec(urlDict, null, true);
             const {
-              rawFilename
+              rawfile_name
             } = fs.serializable;
-            url = rawFilename;
+            url = rawfile_name;
           } else if (typeof urlDict === "string") {
             url = urlDict;
           }
@@ -57997,8 +57997,8 @@ function writeString(string, offset, buffer) {
 }
 function computeMD5(filesize, xrefInfo) {
   const time = Math.floor(Date.now() / 1000);
-  const filename = xrefInfo.filename || "";
-  const md5Buffer = [time.toString(), filename, filesize.toString(), ...xrefInfo.infoMap.values()];
+  const file_name = xrefInfo.file_name || "";
+  const md5Buffer = [time.toString(), file_name, filesize.toString(), ...xrefInfo.infoMap.values()];
   const md5BufferLen = Math.sumPrecise(md5Buffer.map(str => str.length));
   const array = new Uint8Array(md5BufferLen);
   let offset = 0;
@@ -58771,7 +58771,7 @@ class WorkerMessageHandler {
       isPureXfa,
       numPages,
       annotationStorage,
-      filename
+      file_name
     }) {
       const globalPromises = [pdfManager.requestLoadedStream(), pdfManager.ensureCatalog("acroForm"), pdfManager.ensureCatalog("acroFormRef"), pdfManager.ensureDoc("startXRef"), pdfManager.ensureDoc("xref"), pdfManager.ensureCatalog("structTreeRoot")];
       const changes = new RefSetCache();
@@ -58885,7 +58885,7 @@ class WorkerMessageHandler {
           infoMap,
           fileIds: xref.trailer.get("ID") || null,
           startXRef,
-          filename
+          file_name
         };
       }
       return incrementalUpdate({

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/app/lib/auth-client";
-
+import { useRouter } from "next/navigation";
 
 export default function SignUp() {
   const [firstName, setFirstName] = useState("");
@@ -37,38 +37,17 @@ export default function SignUp() {
     setAvatarUrl(data.avatar_url);
     return data.avatar_url;
   }
-
+  const encodeEmail = (email: string) => {
+    return email.replace("@", "-").replace(/\./g, "");
+  };
+  const router = useRouter();
   return (
-    <section className="flex min-h-screen bg-zinc-50 px-4 py-16 md:py-32 dark:bg-transparent">
-      <div className="space-y-2 text-center">
-        <Label className="text-sm">Avatar</Label>
-
-        <div className="flex flex-col items-center gap-3">
-          {avatarPreview && (
-            <img
-              src={avatarPreview}
-              alt="preview"
-              className="w-20 h-20 rounded-full object-cover"
-            />
-          )}
-
-          <Input
-            type="file"
-            accept="image/*"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                setAvatarFile(file);
-                setAvatarPreview(URL.createObjectURL(file));
-              }
-            }}
-          />
-        </div>
-      </div>
+    <section className="flex min-h-screen bg-black px-4 py-16 md:py-32 dark:bg-transparent">
+      <div className="space-y-2 text-center"></div>
 
       <form
         action=""
-        className="bg-card m-auto h-fit w-full max-w-sm rounded-[calc(var(--radius)+.125rem)] border p-0.5 shadow-md dark:[--color-muted:var(--color-zinc-900)]"
+        className="bg-black m-auto h-fit w-full max-w-sm rounded-[calc(var(--radius)+.125rem)] border p-0.5 shadow-md dark:[--color-muted:var(--color-zinc-900)]"
         onSubmit={async (e) => {
           e.preventDefault();
           setLoading(true);
@@ -96,7 +75,9 @@ export default function SignUp() {
                   password,
                   fetchOptions: {
                     onRequest: () => setLoading(true),
-                    onResponse: () => setLoading(false),
+                    onResponse: () => {
+                      setLoading(false), router.push(`/${encodeEmail(email)}`);
+                    },
                     onError: (ctx) => {
                       toast.error(ctx.error.message);
                     },
@@ -113,7 +94,7 @@ export default function SignUp() {
               <GalleryVerticalEnd />
             </Link>
             <h1 className="mb-1 mt-4 text-xl font-semibold">
-              Create a Tailark Account
+              Create a DocsFuture Account
             </h1>
             <p className="text-sm">Welcome! Create an account to get started</p>
           </div>
@@ -172,6 +153,31 @@ export default function SignUp() {
           <hr className="my-4 border-dashed" />
 
           <div className="space-y-5">
+            <div className="flex flex-col space-y-1">
+              <Label className="text-sm">Avatar</Label>
+
+              <div className="flex flex-col items-center gap-3">
+                {avatarPreview && (
+                  <img
+                    src={avatarPreview}
+                    alt="preview"
+                    className="w-20 h-20 rounded-full object-cover"
+                  />
+                )}
+
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setAvatarFile(file);
+                      setAvatarPreview(URL.createObjectURL(file));
+                    }
+                  }}
+                />
+              </div>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="firstname" className="block text-sm">
@@ -236,11 +242,11 @@ export default function SignUp() {
           </div>
         </div>
 
-        <div className="bg-muted rounded-(--radius) border p-3">
+        <div className="bg-black rounded-(--radius) border p-3">
           <p className="text-accent-foreground text-center text-sm">
             Have an account ?
             <Button asChild variant="link" className="px-2">
-              <Link href="#">Sign In</Link>
+              <Link href="/login">Sign In</Link>
             </Button>
           </p>
         </div>

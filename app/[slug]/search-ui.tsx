@@ -52,7 +52,7 @@ import { cn } from "@/lib/utils";
 // import PdfViewer from "@/components/file-viewer/file-viewer";
 import { Document, Page } from "react-pdf";
 import { useSession } from "../lib/auth-client";
-type FileItem = { filename: string; download_url: string; user_id?: string };
+type FileItem = { file_name: string; download_url: string; user_id?: string };
 
 const data: Record<string, { icon: JSX.Element }> = {
   png: {
@@ -463,7 +463,7 @@ export default function UserSearchPage() {
   const [index, setIndex] = useState(0);
   const [results, setResults] = useState<
     {
-      filename: string;
+      file_name: string;
       user_email: string;
       download_url: string;
       title: string;
@@ -786,11 +786,11 @@ const handleSearch = async (searchText: string, rawEmail: string) => {
           {" "}
           <div className="grid grid-cols-4 place-content-between justify-between place-items-center w-full justify-items-center gap-8">
             {filteredResults.map((file, idx) => {
-              const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(file.filename);
+              const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(file.file_name);
 
               // ✅ 2. Lấy phần mở rộng file (luôn đảm bảo là string)
-              const ext = file.filename.includes(".")
-                ? file.filename.split(".").pop()!.toLowerCase()
+              const ext = file.file_name.includes(".")
+                ? file.file_name.split(".").pop()!.toLowerCase()
                 : "unknown";
 
               return (
@@ -804,12 +804,12 @@ const handleSearch = async (searchText: string, rawEmail: string) => {
                         {data[ext]?.icon || data.unknown.icon}
                       </div>
                       <div className="flex w-full h-full justify-between flex-col gap-2">
-                        {!file.filename && (
+                        {!file.file_name && (
                           <Skeleton className="w-[200p] h-5" />
                         )}
-                        {file.filename && (
+                        {file.file_name && (
                           <p className="font-medium font-[BeVietnamPro-Medium] break-all w-full wrap-break-word text-wrap text-xs ">
-                            {file.filename}
+                            {file.file_name}
                           </p>
                         )}
                         <p className="font-medium break-all w-full wrap-break-word text-wrap text-xs ">
@@ -850,7 +850,7 @@ const handleSearch = async (searchText: string, rawEmail: string) => {
                             console.log(index);
                             setDocs([
                               {
-                                uri: `./uploads/${results[idx]?.user_email}/${results[idx]?.filename}`,
+                                uri: `./uploads/${results[idx]?.user_email}/${results[idx]?.file_name}`,
                               },
                             ]);
                           }}
@@ -881,7 +881,7 @@ const handleSearch = async (searchText: string, rawEmail: string) => {
 
                           {/* <iframe
                             className="w-full rounded-lg h-[560px]"
-                            src={`./uploads/${file.user_email}/${file.filename}`}
+                            src={`./uploads/${file.user_email}/${file.file_name}`}
                           ></iframe> */}
                         </div>
 
