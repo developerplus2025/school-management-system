@@ -60,7 +60,7 @@ export default function Navigation() {
   return (
     <div
       className={`w-full fixed  z-20 top-0 bg-black px-12 border-b ${
-        pathname == "/view-file" || pathname == "/sign-up" ? "hidden" : "flex"
+        pathname == "/view-file" || pathname == "/sign-up" || pathname == "/login" ? "hidden" : "flex"
       } justify-between items-center border-input h-[60px]`}
     >
       <div className="flex gap-8 items-center">
