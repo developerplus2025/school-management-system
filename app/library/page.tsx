@@ -32,6 +32,7 @@ import {
   icons,
   ListStart,
   Search,
+  Trash,
 } from "lucide-react";
 
 import { toast } from "sonner";

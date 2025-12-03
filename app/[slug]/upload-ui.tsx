@@ -81,6 +81,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import FileActions from "./FileActions";
 const labels = [
   { value: "math", label: "Math" },
   { value: "physics", label: "Physics" },
@@ -153,6 +154,15 @@ export const columns: ColumnDef<TypeData>[] = [
     cell: ({ row }) => (
       <div className="capitalize">{row.getValue("label")}</div>
     ),
+  },
+  {
+    id: "delete",
+    enableHiding: false,
+    cell: ({ row }) => {
+      const data = row.original;
+
+      return <FileActions data={data} />;
+    },
   },
 ];
 export default function UploadToServer() {
