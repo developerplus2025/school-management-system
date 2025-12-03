@@ -19,6 +19,7 @@
     "hooks": "@/hooks"
   },
   "registries": {
-    "@auth-cn": "https://auth.uprizing.me/r/{name}.json"
+    "@auth-cn": "https://auth.uprizing.me/r/{name}.json",
+    "@react-bits": "https://reactbits.dev/r/{name}.json"
   }
 }
