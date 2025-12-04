@@ -85,9 +85,12 @@ import FileActions from "./FileActions";
 const labels = [
   { value: "math", label: "Math" },
   { value: "physics", label: "Physics" },
+  { value: "computer-science", label: "Computer Science" },
   { value: "chemistry", label: "Chemistry" },
   { value: "english", label: "English" },
   { value: "history", label: "History" },
+  { value: "literature", label: "Literature" },
+  { value: "biology", label: "Biology" },
 ];
 export type TypeData = {
   name: string;
@@ -95,6 +98,8 @@ export type TypeData = {
   lable: string;
   date: string;
   file_class: number;
+  type_file: string;
+  file_size: string;
 };
 export const columns: ColumnDef<TypeData>[] = [
   {
@@ -149,6 +154,22 @@ export const columns: ColumnDef<TypeData>[] = [
     ),
   },
   {
+    accessorKey: "file_size",
+    header: "File Size",
+    cell: ({ row }) => (
+      <div className="capitalize text-sm">
+        {formatBytes(row.getValue("file_size"))}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "type_file",
+    header: "File Type",
+    cell: ({ row }) => (
+      <div className="capitalize text-sm">{row.getValue("type_file")}</div>
+    ),
+  },
+  {
     accessorKey: "label",
     header: "Subject",
     cell: ({ row }) => (
@@ -180,6 +201,8 @@ export default function UploadToServer() {
       lable: string;
       date: string;
       file_class: number;
+      type_file: string;
+      file_size: string;
     }[]
   >([]);
   const [open, setOpen] = React.useState(false);
@@ -230,7 +253,11 @@ export default function UploadToServer() {
       setStatus("Vui lòng đăng nhập trước khi tải lên.");
       return;
     }
-
+    const filesWithoutLabel = files.filter((f) => !f.label);
+    if (filesWithoutLabel.length > 0) {
+      toast.warning("Vui lòng chọn label cho tất cả file trước khi upload.");
+      return;
+    }
     if (files.length === 0) {
       setStatus("Vui lòng chọn file trước khi tải lên.");
       return;
@@ -259,12 +286,16 @@ export default function UploadToServer() {
     files.forEach((f) => {
       if (f.file instanceof File) {
         formData.append("files", f.file);
+
         const newName = f.title?.trim() || f.file.name;
         formData.append("titles", newName);
-        formData.append("labels", f.label || "none");
+
+        formData.append("type_file", f.file.type || "unknown"); // <-- bắt buộc
+        formData.append("file_size", String(f.file.size || 0)); // <-- bắt buộc
+
+        formData.append("labels", f.label || final);
         formData.append("date", (f.date = final));
         formData.append("file_class", f.fileClass || "None");
-        console.log(f.date);
       }
     });
 
@@ -444,11 +475,7 @@ export default function UploadToServer() {
                         <XIcon></XIcon>
                       </AlertDialogCancel>
                       <AlertDialogTitle className="flex w-full pb-4 justify-center">
-                        <Button
-                          variant={"outline"}
-                          size={"sm"}
-                          onClick={openFileDialog}
-                        >
+                        <Button variant={"outline"} onClick={openFileDialog}>
                           Select file
                         </Button>
                       </AlertDialogTitle>
@@ -459,7 +486,11 @@ export default function UploadToServer() {
                             {files.map((file) => (
                               <div
                                 key={file.id}
-                                className="flex my-4 mx-4 items-center justify-between gap-2 rounded-lg border bg-background p-2 pe-3"
+                                className={cn(
+                                  "flex my-4 mx-4 items-center justify-between gap-2 rounded-lg border bg-background p-2 pe-3",
+                                  !file.label ||
+                                    (!file.fileClass && "border-red-500")
+                                )}
                               >
                                 <div className="flex items-center gap-3 overflow-hidden">
                                   {/* <Image
@@ -598,12 +629,30 @@ export default function UploadToServer() {
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                               </AlertDialogFooter>
                               <AlertDialogFooter>
-                                <AlertDialogCancel
-                                  onClick={handleUploadToServer}
-                                  disabled={uploading}
-                                >
-                                  {uploading ? "Đang tải lên..." : "Upload"}
-                                </AlertDialogCancel>
+                                {files.some((f) => !f.label || !f.fileClass) ? (
+                                  <Button
+                                    size={"sm"}
+                                    variant={"outline"}
+                                    onClick={() =>
+                                      toast.warning(
+                                        "Please select label and class for all files before uploading."
+                                      )
+                                    }
+                                  >
+                                    Upload
+                                  </Button>
+                                ) : (
+                                  <AlertDialogCancel
+                                    onClick={handleUploadToServer}
+                                    disabled={
+                                      files.some(
+                                        (f) => !f.label || !f.fileClass
+                                      ) || uploading
+                                    }
+                                  >
+                                    {uploading ? "Đang tải lên..." : "Upload"}
+                                  </AlertDialogCancel>
+                                )}
                               </AlertDialogFooter>
                             </div>
 

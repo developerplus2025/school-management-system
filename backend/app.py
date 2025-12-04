@@ -80,9 +80,12 @@ async def search_all(query: str = Query("*")):
                     "label": file_meta.get("label"),
                     "date": file_meta.get("date"),
                     "file_class": file_meta.get("file_class"),
+                    "type_file": file_meta.get("type_file"),   # NEW
+                    "file_size": file_meta.get("file_size"),   # NEW
                     "download_url": f"http://127.0.0.1:8000/download/{urllib.parse.quote(file)}?user_email={urllib.parse.quote(user_email)}"
                 })
     return {"results": results}
+
 
 
 # ------------------------
@@ -90,8 +93,8 @@ async def search_all(query: str = Query("*")):
 # ------------------------
 @app.get("/search/user")
 async def search_user_files(
-    user_email: str,               # email người dùng
-    query: str = Query("*")        # từ khóa tìm kiếm
+    user_email: str,
+    query: str = Query("*")
 ):
     encoded_email = encode_email(user_email)
     user_path = os.path.join(BASE_DIR, encoded_email)
@@ -115,13 +118,15 @@ async def search_user_files(
                 "label": file_meta.get("label"),
                 "date": file_meta.get("date"),
                 "file_class": file_meta.get("file_class"),
+                "type_file": file_meta.get("type_file"),   # NEW
+                "file_size": file_meta.get("file_size"),   # NEW
                 "download_url": f"http://127.0.0.1:8000/download/{urllib.parse.quote(file_name)}?user_email={urllib.parse.quote(user_email)}"
             })
 
     return {"results": results}
 
-# ------------------------
-#      UPLOAD FILES
+# ------------------------ 
+#      UPLOAD FILES 
 # ------------------------
 @app.post("/upload")
 async def upload_files(
@@ -130,7 +135,9 @@ async def upload_files(
     titles: List[str] = Form(...),
     labels: List[str] = Form(...),
     date: List[str] = Form(...),
-    file_class: List[str] = Form(...)
+    file_class: List[str] = Form(...),
+    type_file: List[str] = Form(...),
+    file_size: List[str] = Form(...)
 ):
     encoded_email = encode_email(user_email)
     user_folder = os.path.join(BASE_DIR, encoded_email)
@@ -139,14 +146,22 @@ async def upload_files(
     meta = load_meta(user_folder)
     saved_files = []
 
-    for file, title, label, date_value, cls in zip(files, titles, labels, date, file_class):
+    for file, title, label, date_value, cls, ftype, fsize in zip(
+        files, titles, labels, date, file_class, type_file, file_size
+    ):
         file_name = f"{title.strip()}{os.path.splitext(file.filename)[1]}"
         file_path = os.path.join(user_folder, file_name)
 
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        meta[file_name] = {"label": label, "date": date_value, "file_class": cls}
+        meta[file_name] = {
+            "label": label,
+            "date": date_value,
+            "file_class": cls,
+            "type_file": ftype,
+            "file_size": fsize
+        }
 
         saved_files.append({
             "name": file_name,
@@ -154,14 +169,15 @@ async def upload_files(
             "label": label,
             "date": date_value,
             "file_class": cls,
+            "type_file": ftype,
+            "file_size": fsize,
             "public_url": f"/uploads/{encoded_email}/{file_name}"
         })
 
     save_meta(user_folder, meta)
     return {"message": "Upload thành công!", "files": saved_files}
-
-# ------------------------
-#      LIST FILES
+# ------------------------ 
+#  LIST FILES 
 # ------------------------
 @app.get("/files")
 async def list_files(user_email: str):
@@ -175,21 +191,24 @@ async def list_files(user_email: str):
     files = []
 
     for f in os.listdir(user_folder):
-        # Bỏ qua user.json và thư mục avatar
         if f == "meta.json" or f == "user.json" or f.lower() == "avatar":
             continue
+
         file_path = os.path.join(user_folder, f)
         if os.path.isdir(file_path):
-            continue  # bỏ qua thư mục khác
+            continue
 
         file_meta = meta.get(f, {})
+
         files.append({
             "name": f,
             "title": os.path.splitext(f)[0],
             "label": file_meta.get("label"),
             "class": file_meta.get("label"),
             "date": file_meta.get("date"),
-            "file_class": file_meta.get("file_class")
+            "file_class": file_meta.get("file_class"),
+            "type_file": file_meta.get("type_file"),
+            "file_size": file_meta.get("file_size")
         })
 
     return {"files": files}

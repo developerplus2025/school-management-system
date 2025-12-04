@@ -27,6 +27,8 @@ import {
 } from "@/components/ui/input-group";
 import {
   Check,
+  ChevronLeft,
+  ChevronRight,
   ChevronsUpDown,
   ChevronUp,
   icons,
@@ -94,6 +96,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { formatBytes } from "@/hooks/use-file-upload";
 
 export type TypeData = {
   file_name: string;
@@ -103,6 +106,8 @@ export type TypeData = {
   label: string;
   date: string;
   file_class: string;
+  type_file: string;
+  file_size: string;
 };
 export const columns: ColumnDef<TypeData>[] = [
   {
@@ -183,7 +188,24 @@ export const columns: ColumnDef<TypeData>[] = [
     ),
   },
   {
+    accessorKey: "file_size",
+    header: "File Size",
+    cell: ({ row }) => (
+      <div className="capitalize text-sm">
+        {formatBytes(row.getValue("file_size"))}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "type_file",
+    header: "File Type",
+    cell: ({ row }) => (
+      <div className="capitalize text-sm">{row.getValue("type_file")}</div>
+    ),
+  },
+  {
     id: "actions",
+    header: "Actions",
     enableHiding: false,
     cell: ({ row }) => {
       const data = row.original;
@@ -695,6 +717,8 @@ export default function HomeSearchPage() {
       label: string;
       date: string;
       file_class: string;
+      type_file: string;
+      file_size: string;
     }[]
   >([]);
   const [loading, setLoading] = useState(false);
@@ -1133,6 +1157,7 @@ export default function HomeSearchPage() {
                 disabled={!table.getCanPreviousPage()}
               >
                 Previous
+                <ChevronLeft />
               </Button>
               <Button
                 variant="outline"
@@ -1141,6 +1166,7 @@ export default function HomeSearchPage() {
                 disabled={!table.getCanNextPage()}
               >
                 Next
+                <ChevronRight />
               </Button>
             </div>
           </div>
