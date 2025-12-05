@@ -221,7 +221,11 @@ export default function UploadToServer() {
       setFileLabel,
       setFileClass,
     },
-  ] = useFileUpload({ multiple: true, maxSize: 5 * 1024 * 1024, maxFiles: 30 });
+  ] = useFileUpload({
+    multiple: true,
+    maxSize: 5 * 1024 * 1024 * 1024,
+    maxFiles: 30,
+  });
 
   // 🧩 Lấy danh sách file từ server
   const fetchServerFiles = async () => {
@@ -418,6 +422,10 @@ export default function UploadToServer() {
       rowSelection,
     },
   });
+  useEffect(() => {
+    table.setPageSize(8); // đặt pageSize mặc định
+  }, [table]);
+
   return (
     <div className="flex mt-[40px] flex-col w-full px-[3rem]  gap-6">
       {!login ? (
@@ -687,7 +695,7 @@ export default function UploadToServer() {
                               column.toggleVisibility(!!value)
                             }
                           >
-                            {column.id}
+                            {column.id.replace("_", " ")}
                           </DropdownMenuCheckboxItem>
                         );
                       })}
@@ -723,11 +731,13 @@ export default function UploadToServer() {
                         data-state={row.getIsSelected() && "selected"}
                       >
                         {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id}>
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext()
-                            )}
+                          <TableCell className="capitalize" key={cell.id}>
+                            {cell.column.id === "label"
+                              ? String(cell.getValue()).replace("-", " ")
+                              : flexRender(
+                                  cell.column.columnDef.cell,
+                                  cell.getContext()
+                                )}
                           </TableCell>
                         ))}
                       </TableRow>

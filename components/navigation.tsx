@@ -60,7 +60,11 @@ export default function Navigation() {
   return (
     <div
       className={`w-full fixed  z-20 top-0 bg-black px-12 border-b ${
-        pathname == "/view-file" || pathname == "/sign-up" || pathname == "/login" ? "hidden" : "flex"
+        pathname == "/view-file" ||
+        pathname == "/sign-up" ||
+        pathname == "/login"
+          ? "hidden"
+          : "flex"
       } justify-between items-center border-input h-[60px]`}
     >
       <div className="flex gap-8 items-center">
@@ -82,6 +86,12 @@ export default function Navigation() {
         </div>
       </div>
       <div className="gap-4 flex items-center">
+        <Button size={"sm"} variant={"outline"}>
+          Contact
+        </Button>
+        <Button size={"sm"} variant={"outline"}>
+          Support
+        </Button>
         <UserButtonClient />
       </div>
     </div>
