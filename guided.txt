@@ -2,6 +2,6 @@
 # Author: Pham Quang Truong An
 # Command Run
 # - Tab 1 : uvicorn backend.app:app --reload --port 8000
-# - Tab 2 : npm install & npm run dev  
+# - Tab 2 : npm install & npm run dev
 # Good Look !
 # ------------------------

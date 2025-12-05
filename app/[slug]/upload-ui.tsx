@@ -89,8 +89,6 @@ const labels = [
   { value: "chemistry", label: "Chemistry" },
   { value: "english", label: "English" },
   { value: "history", label: "History" },
-  { value: "literature", label: "Literature" },
-  { value: "biology", label: "Biology" },
 ];
 export type TypeData = {
   name: string;

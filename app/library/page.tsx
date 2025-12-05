@@ -831,7 +831,7 @@ export default function HomeSearchPage() {
     },
   });
   useEffect(() => {
-    table.setPageSize(8); // đặt pageSize mặc định
+    table.setPageSize(6); // đặt pageSize mặc định
   }, [table]);
 
   return (
