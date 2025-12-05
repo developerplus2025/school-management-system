@@ -365,7 +365,7 @@ const subjectFilterData = [
   },
   {
     id: 4,
-    value: "computer-science",
+    value: "computerscience",
     name: "Computer Science",
     icons: (
       <svg
