@@ -1101,12 +1101,14 @@ export default function HomeSearchPage() {
                       data-state={row.getIsSelected() && "selected"}
                     >
                       {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
+                        <TableCell className="capitalize" key={cell.id}>
                           {cell.column.id === "user_email"
                             ? String(cell.getValue()).replace(
                                 "-gmailcom",
                                 "@gmail.com"
                               )
+                            : cell.column.id === "label"
+                            ? String(cell.getValue()).replace("-", " ")
                             : flexRender(
                                 cell.column.columnDef.cell,
                                 cell.getContext()
