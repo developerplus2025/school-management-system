@@ -569,7 +569,12 @@ scrollbar-width: none;
   font-display: swap;
   font-style: italic;
 }
-
+.drap-windows{
+  -webkit-app-region: drag;
+}
+.scroll-library{
+  scrollbar-width: none
+}
 @layer base {
   * {
     @apply border-border outline-ring/50;

@@ -235,10 +235,7 @@ export default function UserButtonClient() {
   }
   return (
     <div className={`flex items-center gap-4`}>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={!isPending ? { opacity: 1 } : { opacity: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
+      <div
         className={`${
           !isPending ? "" : "pointer-events-none"
         } flex items-center gap-2`}
@@ -482,7 +479,7 @@ export default function UserButtonClient() {
             </motion.div>
           </div>
         )}
-      </motion.div>
+      </div>
     </div>
   );
 }

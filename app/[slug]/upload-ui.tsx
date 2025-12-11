@@ -89,6 +89,67 @@ const labels = [
   { value: "chemistry", label: "Chemistry" },
   { value: "english", label: "English" },
   { value: "history", label: "History" },
+
+  {
+    value: "literature",
+    label: "Literature",
+  },
+  {
+    value: "natural-and-social-sciences",
+    label: "Natural and Social Sciences",
+  },
+  {
+    value: "science",
+    label: "Science",
+  },
+  {
+    value: "geography",
+    label: "Geography",
+  },
+  {
+    value: "natural-sciences",
+    label: "Natural Sciences",
+  },
+  {
+    value: "technology",
+    label: "Technology",
+  },
+  {
+    value: "civic-education",
+    label: "Civic Education",
+  },
+  {
+    value: "experiential-activities-career-guidance",
+    label: "Experiential Activities – Career Guidance",
+  },
+  {
+    value: "local-education",
+    label: "Local Education",
+  },
+  {
+    value: "national-defense-and-security-education",
+    label: "National Defense and Security Education",
+  },
+  {
+    value: "biology",
+    label: "Biology",
+  },
+  {
+    value: "technology-2",
+    label: "Technology",
+  },
+  {
+    value: "social-sciences",
+    label: "Social Sciences",
+  },
+  {
+    value: "fine-arts",
+    label: "Fine Arts",
+  },
+  {
+    value: "music",
+    label: "Music",
+  },
 ];
 export type TypeData = {
   name: string;
@@ -423,7 +484,7 @@ export default function UploadToServer() {
     },
   });
   useEffect(() => {
-    table.setPageSize(8); // đặt pageSize mặc định
+    table.setPageSize(12); // đặt pageSize mặc định
   }, [table]);
 
   return (
@@ -475,7 +536,7 @@ export default function UploadToServer() {
                       Upload
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent className="max-w-[900px]! ">
+                  <AlertDialogContent className="max-w-[1200px]! ">
                     <AlertDialogHeader>
                       <AlertDialogCancel className="self-end border-none! dark:bg-none!">
                         <XIcon></XIcon>
@@ -530,7 +591,7 @@ export default function UploadToServer() {
                                     </Button>
                                   </PopoverTrigger>
 
-                                  <PopoverContent className="w-[160px] p-0">
+                                  <PopoverContent className="w-[260px] p-0">
                                     <Command>
                                       <CommandInput
                                         placeholder="Search label..."

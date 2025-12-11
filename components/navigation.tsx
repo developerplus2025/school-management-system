@@ -85,7 +85,7 @@ export default function Navigation() {
           ))}
         </div>
       </div>
-      <div className="gap-4 flex items-center">
+      <div className="gap-4  flex items-center">
         <Button size={"sm"} variant={"outline"}>
           Contact
         </Button>

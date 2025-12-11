@@ -9,7 +9,7 @@ export default function LibraryLayout({
   children: React.ReactNode;
 }) {
   return (
-    <section className="flex w-full h-[calc(100vh-60px)] items-center justify-center overflow-y-hidden">
+    <section className="flex w-full h-[calc(100vh-40px)] items-center justify-center overflow-y-hidden">
       {children}
     </section>
   );
