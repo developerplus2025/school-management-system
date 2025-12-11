@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import Navigation from "@/components/navigation";
 
 import { Toaster } from "@/components/ui/sonner";
+import NavigationDesktop from "@/components/navigation-desktop";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,7 +36,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <body
-          className={`${geistSans.variable} ${geistMono.variable}  h-screen flex flex-col gap-8 items-center  antialiased`}
+          className={`${geistSans.variable} ${geistMono.variable}   h-screen flex flex-col gap-8 items-center  antialiased`}
         >
           <ThemeProvider
             attribute="class"

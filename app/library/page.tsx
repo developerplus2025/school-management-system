@@ -513,6 +513,72 @@ const data: Record<string, { icon: JSX.Element }> = {
     ),
   },
 };
+const subjectFilterDataCommand = [
+  {
+    value: "literature",
+    label: "Literature",
+  },
+  {
+    value: "natural-and-social-sciences",
+    label: "Natural and Social Sciences",
+  },
+  {
+    value: "science",
+    label: "Science",
+  },
+  {
+    value: "history",
+    label: "History",
+  },
+  {
+    value: "geography",
+    label: "Geography",
+  },
+  {
+    value: "natural-sciences",
+    label: "Natural Sciences",
+  },
+  {
+    value: "technology",
+    label: "Technology",
+  },
+  {
+    value: "civic-education",
+    label: "Civic Education",
+  },
+  {
+    value: "experiential-activities-career-guidance",
+    label: "Experiential Activities – Career Guidance",
+  },
+  {
+    value: "local-education",
+    label: "Local Education",
+  },
+  {
+    value: "national-defense-and-security-education",
+    label: "National Defense and Security Education",
+  },
+  {
+    value: "biology",
+    label: "Biology",
+  },
+  {
+    value: "technology-2",
+    label: "Technology",
+  },
+  {
+    value: "social-sciences",
+    label: "Social Sciences",
+  },
+  {
+    value: "fine-arts",
+    label: "Fine Arts",
+  },
+  {
+    value: "music",
+    label: "Music",
+  },
+];
 const subjectFilterData = [
   {
     id: 7,
@@ -657,6 +723,102 @@ const subjectFilterData = [
         />
       </svg>
     ),
+  },
+  {
+    id: 6,
+    value: "literature",
+    name: "Literature",
+    icons: "",
+  },
+  {
+    id: 7,
+    value: "natural-and-social-sciences",
+    name: "Natural and Social Sciences",
+    icons: "",
+  },
+  {
+    id: 8,
+    value: "science",
+    name: "Science",
+    icons: "",
+  },
+  {
+    id: 9,
+    value: "history",
+    name: "History",
+    icons: "",
+  },
+  {
+    id: 10,
+    value: "geography",
+    name: "Geography",
+    icons: "",
+  },
+  {
+    id: 11,
+    value: "natural-sciences",
+    name: "Natural Sciences",
+    icons: "",
+  },
+  {
+    id: 12,
+    value: "technology",
+    name: "Technology",
+    icons: "",
+  },
+  {
+    id: 13,
+    value: "civic-education",
+    name: "Civic Education",
+    icons: "",
+  },
+  {
+    id: 14,
+    value: "experiential-activities-career-guidance",
+    name: "Experiential Activities – Career Guidance",
+    icons: "",
+  },
+  {
+    id: 15,
+    value: "local-education",
+    name: "Local Education",
+    icons: "",
+  },
+  {
+    id: 16,
+    value: "national-defense-and-security-education",
+    name: "National Defense and Security Education",
+    icons: "",
+  },
+  {
+    id: 17,
+    value: "biology",
+    name: "Biology",
+    icons: "",
+  },
+  {
+    id: 18,
+    value: "technology-2",
+    name: "Technology",
+    icons: "",
+  },
+  {
+    id: 19,
+    value: "social-sciences",
+    name: "Social Sciences",
+    icons: "",
+  },
+  {
+    id: 20,
+    value: "fine-arts",
+    name: "Fine Arts",
+    icons: "",
+  },
+  {
+    id: 21,
+    value: "music",
+    name: "Music",
+    icons: "",
   },
 ];
 const classFilterData = [
@@ -831,11 +993,15 @@ export default function HomeSearchPage() {
     },
   });
   useEffect(() => {
+<<<<<<< HEAD
     table.setPageSize(5); // đặt pageSize mặc định
+=======
+    table.setPageSize(11); // đặt pageSize mặc định
+>>>>>>> 6c498df92528fb8b9259446beb0f76061c5089e1
   }, [table]);
 
   return (
-    <div className="w-full h-[calc(100vh-100px)] pt-12 px-12 mx-auto  flex flex-col items-center gap-6">
+    <div className="w-full h-[calc(100vh-100px)] pt-6 px-6 mx-auto  flex flex-col items-center gap-6">
       {/* Thanh tìm kiếm */}
 
       <ul className="w-full">
@@ -864,7 +1030,7 @@ export default function HomeSearchPage() {
             </InputGroup>
 
             <div className="flex gap-4 items-center">
-              <div className="w-full justify-center  gap-6 flex items-center">
+              <div className="w-full overflow-x-auto overflow-hidden justify-center  gap-6 flex items-center">
                 <Button
                   onClick={() => toggleAll("subject", subjectFilterData)}
                   variant="outline"
@@ -878,33 +1044,35 @@ export default function HomeSearchPage() {
                   All Subjects
                 </Button>
 
-                {subjectFilterData
-                  .filter((d) => d.value !== "all")
-                  .map((data) => {
-                    const isSelected = filter.subject.includes(data.value);
+                <div className="w-[660px] scroll-library overflow-x-scroll gap-4 flex">
+                  {subjectFilterData
+                    .filter((d) => d.value !== "all")
+                    .map((data) => {
+                      const isSelected = filter.subject.includes(data.value);
 
-                    return (
-                      <Button
-                        key={data.id}
-                        disabled={filter.subject.length === 0} // disable khi All
-                        className={cn(
-                          isSelected ? "text-white" : "text-[#a1a1a1]",
-                          filter.subject.length === 0
-                            ? "opacity-40 cursor-not-allowed"
-                            : ""
-                        )}
-                        onClick={() => {
-                          if (filter.subject.length === 0) return;
-                          toggleFilter("subject", data.value);
-                        }}
-                        variant="outline"
-                        size="sm"
-                      >
-                        {data.icons}
-                        {data.name}
-                      </Button>
-                    );
-                  })}
+                      return (
+                        <Button
+                          key={data.id}
+                          disabled={filter.subject.length === 0} // disable khi All
+                          className={cn(
+                            isSelected ? "text-white" : "text-[#a1a1a1]",
+                            filter.subject.length === 0
+                              ? "opacity-40 cursor-not-allowed"
+                              : ""
+                          )}
+                          onClick={() => {
+                            if (filter.subject.length === 0) return;
+                            toggleFilter("subject", data.value);
+                          }}
+                          variant="outline"
+                          size="sm"
+                        >
+                          {data.icons}
+                          {data.name}
+                        </Button>
+                      );
+                    })}
+                </div>
               </div>
               <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
@@ -969,7 +1137,7 @@ export default function HomeSearchPage() {
 
                         {/* Subject filter */}
                         <CommandGroup heading="Subject">
-                          {subjectFilterData
+                          {subjectFilterDataCommand
                             .filter((d) => d.value !== "all")
                             .map((data) => (
                               <CommandItem
@@ -981,7 +1149,7 @@ export default function HomeSearchPage() {
                                   toggleFilter("subject", data.value);
                                 }}
                               >
-                                {data.name}
+                                {data.label}
                                 <Check
                                   className={cn(
                                     "ml-auto",
@@ -1101,16 +1269,27 @@ export default function HomeSearchPage() {
                       data-state={row.getIsSelected() && "selected"}
                     >
                       {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
+                        <TableCell
+                          className={`${
+                            cell.column.id !== "user_email" ? "capitalize " : ""
+                          }  ${
+                            cell.column.id === "file_name"
+                              ? "font-[BeVietnamPro-Regular]"
+                              : ""
+                          }`}
+                          key={cell.id}
+                        >
                           {cell.column.id === "user_email"
                             ? String(cell.getValue()).replace(
                                 "-gmailcom",
                                 "@gmail.com"
                               )
-                            : flexRender(
-                                cell.column.columnDef.cell,
-                                cell.getContext()
-                              )}
+                            : cell.column.id === "label"
+                              ? String(cell.getValue()).replace("-", " ")
+                              : flexRender(
+                                  cell.column.columnDef.cell,
+                                  cell.getContext()
+                                )}
                         </TableCell>
                       ))}
                     </TableRow>
