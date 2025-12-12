@@ -1134,7 +1134,7 @@ export default function HomeSearchPage() {
 
                         {/* Subject filter */}
                         <CommandGroup heading="Subject">
-                          {subjectFilterDataCommand
+                          {subjectFilterData
                             .filter((d) => d.value !== "all")
                             .map((data) => (
                               <CommandItem
@@ -1146,7 +1146,7 @@ export default function HomeSearchPage() {
                                   toggleFilter("subject", data.value);
                                 }}
                               >
-                                {data.label}
+                                {data.name}
                                 <Check
                                   className={cn(
                                     "ml-auto",
