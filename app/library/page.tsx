@@ -36,7 +36,14 @@ import {
   Search,
   Trash,
 } from "lucide-react";
-
+import {
+  Autocomplete,
+  AutocompleteEmpty,
+  AutocompleteInput,
+  AutocompleteItem,
+  AutocompleteList,
+  AutocompletePopup,
+} from "@/components/ui/autocomplete";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -1023,8 +1030,7 @@ export default function HomeSearchPage() {
               <InputGroupAddon align="inline-end">
                 {results.length} results
               </InputGroupAddon>
-            </InputGroup>
-
+            </InputGroup>{" "}
             <div className="flex gap-4 items-center">
               <div className="w-full overflow-x-auto overflow-hidden justify-center  gap-6 flex items-center">
                 <Button
@@ -1133,7 +1139,7 @@ export default function HomeSearchPage() {
 
                         {/* Subject filter */}
                         <CommandGroup heading="Subject">
-                          {subjectFilterDataCommand
+                          {subjectFilterData
                             .filter((d) => d.value !== "all")
                             .map((data) => (
                               <CommandItem
@@ -1145,7 +1151,7 @@ export default function HomeSearchPage() {
                                   toggleFilter("subject", data.value);
                                 }}
                               >
-                                {data.label}
+                                {data.name}
                                 <Check
                                   className={cn(
                                     "ml-auto",
