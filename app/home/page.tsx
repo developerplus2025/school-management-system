@@ -43,7 +43,7 @@ export default function HomePage() {
 
             <ArrowRight className="size-4" />
           </Link>
-          <h1 className=" w-[700px] text-center text-3xl font-medium md:text-5xl xl:text-6xl">
+          <h1 className=" w-[650px] text-center text-3xl font-medium md:text-5xl xl:text-6xl">
             A Complete Learning Resource for Students
           </h1>
           <p className="w-[530px] text-center">

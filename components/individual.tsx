@@ -835,7 +835,7 @@ export default function Individual() {
       transition={{ duration: 0.25 }}
       className="px-64"
     >
-      <div className="mt-4 mb-12 hidden items-center justify-center space-x-2">
+      <div className="mt-4 mb-12 flex items-center justify-center space-x-2">
         <span className="text-sm">Monthly</span>
         <Switch
           checked={isYearly}
@@ -914,9 +914,7 @@ export default function Individual() {
                     </div>
                   )}
                 </CardTitle>
-                <p className="flex items-center justify-center text-3xl font-medium">
-                  {tier.price} $
-                </p>
+               
                 <NumberFlowGroup>
                   <NumberFlow
                     className="flex items-center justify-center text-3xl font-medium"

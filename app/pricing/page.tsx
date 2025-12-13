@@ -4,7 +4,7 @@ import React from "react";
 
 export default function PricingPage() {
   return (
-    <main className="h-[calc(100vh-60px)] font-semibold flex flex-col gap-4 items-center justify-center">
+    <main className="h-[1000px] mt-12 font-semibold flex flex-col gap-4 items-center justify-center">
       {/* <h1 className="text-4xl ">Comming Soon</h1> */}
       <div className="flex flex-col gap-4 items-center">
         {/* <p className="text-xl font-medium">
