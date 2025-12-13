@@ -5,15 +5,17 @@ import { authClient, useSession } from "@/app/lib/auth-client";
 import { usePathname, useRouter } from "next/navigation";
 import UserButtonClient from "./user-button-client";
 import Link from "next/link";
+import { ModeToggle } from "./ThemeToggle";
 const data = [
   {
     id: 1,
-    name: "Home",
+    name: "Nhà",
     src: "/home",
   },
+
   {
     id: 2,
-    name: "Library",
+    name: "Thư Viện",
     src: "/library",
   },
 
@@ -86,7 +88,7 @@ export default function Navigation() {
         </div>
       </div>
       <div className="gap-4 flex items-center">
-        <Button variant={'outline'}>Donate</Button>
+        <ModeToggle/>
         <UserButtonClient />
       </div>
     </div>
