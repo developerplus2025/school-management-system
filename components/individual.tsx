@@ -12,7 +12,7 @@ import {
   Check,
   ChevronsUpDown,
 } from "lucide-react";
-
+import NumberFlow, { NumberFlowGroup } from "@number-flow/react";
 import {
   Command,
   CommandEmpty,
@@ -44,7 +44,6 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 
-
 import { z } from "zod";
 
 import {
@@ -68,8 +67,6 @@ import {
 } from "@/components/ui/card";
 
 import { BadgeCheck, HelpCircleIcon } from "lucide-react";
-
-
 
 const pricingData = {
   individual: [
@@ -920,7 +917,7 @@ export default function Individual() {
                 <p className="flex items-center justify-center text-3xl font-medium">
                   {tier.price} $
                 </p>
-                {/* <NumberFlowGroup>
+                <NumberFlowGroup>
                   <NumberFlow
                     className="flex items-center justify-center text-3xl font-medium"
                     value={
@@ -937,7 +934,7 @@ export default function Individual() {
                     }}
                     suffix={`per user / ${isYearly ? "year" : "month"}`}
                   />
-                </NumberFlowGroup> */}
+                </NumberFlowGroup>
 
                 <CardDescription className="text-center text-[0.86rem] text-balance text-[#a1a1a1]">
                   {tier.description}
