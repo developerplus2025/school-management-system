@@ -914,9 +914,7 @@ export default function Individual() {
                     </div>
                   )}
                 </CardTitle>
-                <p className="flex items-center justify-center text-3xl font-medium">
-                  {tier.price} $
-                </p>
+
                 <NumberFlowGroup>
                   <NumberFlow
                     className="flex items-center justify-center text-3xl font-medium"
