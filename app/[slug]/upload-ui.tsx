@@ -270,7 +270,7 @@ export default function UploadToServer() {
   // 🔧 State đổi tên file
   const [editingFile, setEditingFile] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
-
+  const [accept, setAccept] = useState(false);
   const [
     { files },
     {
@@ -293,9 +293,7 @@ export default function UploadToServer() {
     if (!userEmail || !token) return;
     try {
       const res = await fetch(
-        `http://127.0.0.1:8000/files?user_email=${encodeURIComponent(
-          userEmail
-        )}`,
+        `http://127.0.0.1:8000/files?user_email=${encodeURIComponent(userEmail)}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await res.json();
@@ -325,6 +323,7 @@ export default function UploadToServer() {
       setStatus("Vui lòng chọn file trước khi tải lên.");
       return;
     }
+
     const now = new Date();
 
     const datePart = now.toLocaleDateString("en-US", {
@@ -349,6 +348,21 @@ export default function UploadToServer() {
     files.forEach((f) => {
       if (f.file instanceof File) {
         formData.append("files", f.file);
+        const bannedTypes = [
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+          "image/gif",
+          "image/jpg",
+        ];
+
+        // Kiểm tra TẤT CẢ file phải không thuộc loại bị cấm
+        const allAllowed = files.every(
+          (f) => !bannedTypes.includes(f.file.type)
+        );
+
+        setAccept(allAllowed);
+        console.log(accept);
 
         const newName = f.title?.trim() || f.file.name;
         formData.append("titles", newName);
@@ -698,13 +712,19 @@ export default function UploadToServer() {
                               <AlertDialogFooter>
                                 {files.some((f) => !f.label || !f.fileClass) ? (
                                   <Button
-                                    size={"sm"}
-                                    variant={"outline"}
-                                    onClick={() =>
-                                      toast.warning(
-                                        "Please select label and class for all files before uploading."
-                                      )
-                                    }
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      if (!accept) {
+                                        toast.warning(
+                                          "Files are not accepted."
+                                        );
+                                      } else {
+                                        toast.warning(
+                                          "Please select label and class for all files before uploading."
+                                        );
+                                      }
+                                    }}
                                   >
                                     Upload
                                   </Button>

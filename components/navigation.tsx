@@ -5,6 +5,7 @@ import { authClient, useSession } from "@/app/lib/auth-client";
 import { usePathname, useRouter } from "next/navigation";
 import UserButtonClient from "./user-button-client";
 import Link from "next/link";
+import { ModeToggle } from "./theme-toggle";
 const data = [
   {
     id: 1,
@@ -91,6 +92,10 @@ export default function Navigation() {
         </Button>
         <Button size={"sm"} variant={"outline"}>
           Support
+        </Button>
+        <ModeToggle />
+        <Button size={"sm"} variant={"outline"}>
+          Donate
         </Button>
         <UserButtonClient />
       </div>
