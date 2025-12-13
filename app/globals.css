@@ -575,6 +575,15 @@ scrollbar-width: none;
 .scroll-library{
   scrollbar-width: none
 }
+number-flow-react::part(suffix) {
+  color: #a1a1a1;
+}
+  number-flow-react::part(suffix) {
+    padding-left: 8px;
+    font-weight: normal;
+    font-size: 1rem;
+    color: #828182;
+  }
 @layer base {
   * {
     @apply border-border outline-ring/50;
