@@ -8,7 +8,9 @@ import React from "react";
 export default function HomePage() {
   return (
     <main className="w-full flex justify-center relative items-center h-[calc(100vh-60px)] ">
-      <div style={{ width: "100%", height: 600, position: "absolute" }}>
+      <div 
+      className="pointer-events-none"
+      style={{ width: "100%", height: 600, position: "absolute" }}>
         <LiquidEther
           colors={["#5227FF", "#FF9FFC", "#B19EEF"]}
           mouseForce={20}
@@ -27,7 +29,7 @@ export default function HomePage() {
           autoRampDuration={0.6}
         />
       </div>
-      <section className=" ">
+      <section className="relative z-10 ">
         <div className="flex flex-col items-center justify-center w-full gap-8">
           <Link
             href="/"
@@ -51,12 +53,9 @@ export default function HomePage() {
             goals, develop critical thinking, and grow into a lifelong learner.
           </p>
           <div className="flex gap-4 items-center">
-            <Link href={"/login"}>
+            <Link href={"/library"}>
               {" "}
               <Button variant={"outline"}> Getting Started</Button>
-            </Link>
-            <Link href={"/library"}>
-              <Button variant={"outline"}> Explore Now</Button>
             </Link>
           </div>
         </div>
